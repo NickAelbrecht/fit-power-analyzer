@@ -1,0 +1,54 @@
+<div
+  class="upload-container"
+  (click)="openFileSelector()"
+  [class.is-dragging]="isDragging"
+  [class.is-processing]="isProcessing"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  <div class="upload-content">
+    <h2>Upload .FIT Files</h2>
+    <p>Drag and drop your .FIT files here or click to browse</p>
+
+    <div class="icon-container">
+      <svg xmlns="http://www.w3.org/2000/svg" height="64" width="64" viewBox="0 0 24 24">
+        <path
+          d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
+        />
+      </svg>
+    </div>
+
+    <input
+      type="file"
+      id="fileInput"
+      accept=".fit"
+      multiple
+      (change)="onFileSelected($event)"
+      [disabled]="isProcessing"
+      style="display: none"
+    />
+
+    <button class="upload-button" (click)="openFileSelector($event)" [disabled]="isProcessing">
+      Browse Files
+    </button>
+
+    <div *ngIf="isProcessing" class="processing-indicator">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <p>Processing files...</p>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+      </div>
+      <p class="progress-text">
+        {{ completedFiles }} of {{ totalFiles }} files processed ({{ uploadProgress }}%)
+      </p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+  </div>
+</div>

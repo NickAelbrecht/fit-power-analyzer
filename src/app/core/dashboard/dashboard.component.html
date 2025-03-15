@@ -1,0 +1,116 @@
+<div class="dashboard-layout">
+  <!-- Left column - Upload and recent activities -->
+  <div class="dashboard-left-panel">
+    <!-- Upload section -->
+    <section class="upload-card">
+      <h2 class="section-title">Upload Activity</h2>
+      <app-file-upload></app-file-upload>
+
+      <!-- Add clear all button -->
+      <button class="clear-all-btn" (click)="clearAllActivities()">Clear All Activities</button>
+    </section>
+
+    <!-- Stats summary cards -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="material-icons">trending_up</i>
+        </div>
+        <div class="stat-data">
+          <h3>Recent Activities</h3>
+          <p class="stat-value">{{ (activities$ | async)?.length || 0 }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="material-icons">flash_on</i>
+        </div>
+        <div class="stat-data">
+          <h3>Max Power</h3>
+          <p class="stat-value">{{ maxPower }} W</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="material-icons">speed</i>
+        </div>
+        <div class="stat-data">
+          <h3>Avg Power</h3>
+          <p class="stat-value">{{ avgPower }} W</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column - Recent activities preview -->
+  <div class="dashboard-right-panel">
+    <section class="recent-activities">
+      <div class="section-header">
+        <h2 class="section-title">Recent Activities</h2>
+        <button class="view-all-btn" (click)="navigateToActivities()">
+          View All
+          <i class="material-icons">arrow_forward</i>
+        </button>
+      </div>
+
+      <div class="recent-activities-list">
+        <div
+          *ngFor="let activity of recentActivities$ | async"
+          class="activity-preview-card"
+          [class.selected]="(selectedActivityId$ | async) === activity.id"
+          (click)="selectActivity(activity.id)"
+        >
+          <div class="activity-preview-header" [ngClass]="getActivityTypeClass(activity)">
+            <div class="activity-type-icon">
+              <i class="material-icons">{{ getActivityIcon(activity) }}</i>
+            </div>
+            <div class="activity-info">
+              <div class="activity-name">{{ formatActivityName(activity) }}</div>
+              <div class="activity-date">{{ activity.date | date: 'MMM d, y • h:mm a' }}</div>
+            </div>
+          </div>
+          <div class="activity-preview-metrics">
+            <div class="preview-metric">
+              <span class="metric-value">{{ activity.avgPower }}</span>
+              <span class="metric-label">Avg W</span>
+            </div>
+            <div class="preview-metric">
+              <span class="metric-value">{{ activity.maxPower }}</span>
+              <span class="metric-label">Max W</span>
+            </div>
+            <div class="preview-metric">
+              <span class="metric-value">{{ formatDuration(activity.totalTime) }}</span>
+              <span class="metric-label">Duration</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="(activities$ | async)?.length === 0" class="no-activities-preview">
+          <i class="material-icons empty-icon">fitness_center</i>
+          <p>No activities yet</p>
+          <span>Upload a .FIT file to get started</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Power Dashboard preview -->
+    <section class="dashboard-preview">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="section-title m-0">Activity Preview</h3>
+      </div>
+      <div class="mb-4">
+        <app-power-dashboard></app-power-dashboard>
+      </div>
+
+      <!-- Test Chart (for debugging) -->
+      <div class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="section-title m-0">Test Chart</h3>
+        </div>
+        <app-test-chart></app-test-chart>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,463 @@
+.power-analysis-container {
+  padding: 20px;
+  
+  .section {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 30px;
+    
+    h2 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+  }
+  
+  .ftp-section {
+    .ftp-input {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      
+      label {
+        margin-right: 10px;
+        font-weight: 500;
+      }
+      
+      input {
+        width: 100px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-right: 10px;
+      }
+      
+      button {
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+        
+        &:hover {
+          background-color: #1976D2;
+        }
+      }
+    }
+    
+    .power-zones {
+      h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+      
+      .zones-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        
+        .zone-item {
+          flex: 1;
+          min-width: 120px;
+          border-radius: 4px;
+          padding: 10px;
+          color: white;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+          
+          .zone-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+          }
+          
+          .zone-range {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+
+    .ftp-card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .ftp-card {
+      flex: 1;
+      min-width: 280px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      
+      h3 {
+        margin-top: 0;
+        font-size: 16px;
+        color: #444;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+    }
+
+    .manual-ftp {
+      .ftp-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .ftp-value-display {
+        text-align: center;
+        
+        .current-ftp {
+          font-size: 42px;
+          font-weight: 700;
+          color: #2196F3;
+        }
+        
+        .ftp-unit {
+          font-size: 16px;
+          color: #666;
+          margin-left: 5px;
+        }
+      }
+
+      .slider-container {
+        width: 100%;
+        margin: 5px 0 15px;
+        
+        .ftp-slider {
+          width: 100%;
+          height: 6px;
+          -webkit-appearance: none;
+          appearance: none;
+          background: linear-gradient(to right, #1976D2, #4CAF50, #FFC107, #F44336);
+          outline: none;
+          border-radius: 3px;
+          
+          &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 2px solid #2196F3;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          }
+          
+          &::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 2px solid #2196F3;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          }
+        }
+        
+        .range-values {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          color: #666;
+          margin-top: 5px;
+        }
+      }
+
+      .ftp-manual-input {
+        display: flex;
+        gap: 10px;
+        
+        .ftp-number-input {
+          flex: 1;
+          padding: 8px 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+        
+        .save-ftp-btn {
+          background-color: #2196F3;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 8px 16px;
+          cursor: pointer;
+          font-weight: 500;
+          
+          &:hover {
+            background-color: #1976D2;
+          }
+        }
+      }
+    }
+
+    .auto-ftp {
+      .auto-ftp-methods {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .auto-ftp-method {
+        background-color: white;
+        border-radius: 6px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        
+        .method-header {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          align-items: center;
+          
+          .method-name {
+            font-weight: 500;
+            color: #444;
+          }
+          
+          .method-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4CAF50;
+            
+            &:empty::after,
+            &:has(+:empty)::after {
+              content: "0W";
+              color: #999;
+              font-weight: 400;
+            }
+          }
+        }
+        
+        .method-description {
+          color: #666;
+          font-size: 13px;
+          margin-bottom: 15px;
+        }
+        
+        .use-estimate-btn {
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 8px 12px;
+          cursor: pointer;
+          font-size: 13px;
+          width: 100%;
+          
+          &:hover {
+            background-color: #388E3C;
+          }
+          
+          &:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+  }
+  
+  .best-efforts-section {
+    .best-efforts-table {
+      width: 100%;
+      border-collapse: collapse;
+      
+      .table-header {
+        display: flex;
+        background-color: #f5f5f5;
+        font-weight: 500;
+        border-bottom: 2px solid #ddd;
+        
+        .header-cell {
+          flex: 1;
+          padding: 12px 15px;
+          text-align: left;
+        }
+      }
+      
+      .table-row {
+        display: flex;
+        border-bottom: 1px solid #eee;
+        
+        &:hover {
+          background-color: #f9f9f9;
+        }
+        
+        .cell {
+          flex: 1;
+          padding: 12px 15px;
+        }
+        
+        .power-cell {
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  .power-curve-section {
+    .chart-container {
+      height: 400px;
+    }
+  }
+  
+  .no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+  }
+}
+
+.analysis-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+    
+    &.active {
+      background-color: #2196F3;
+      color: white;
+      font-weight: 500;
+    }
+  }
+}
+
+.ftp-estimation {
+  margin-top: 15px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+  padding: 10px;
+  
+  p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  button {
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    
+    &:hover {
+      background-color: #388e3c;
+    }
+  }
+}
+
+.ftp-history-section {
+  .chart-container {
+    height: 300px;
+    margin-bottom: 20px;
+  }
+  
+  .ftp-history-table {
+    width: 100%;
+    
+    .table-header {
+      display: flex;
+      background-color: #f5f5f5;
+      font-weight: 500;
+      border-bottom: 2px solid #ddd;
+      
+      .header-cell {
+        flex: 1;
+        padding: 12px 15px;
+        text-align: left;
+      }
+    }
+    
+    .table-row {
+      display: flex;
+      border-bottom: 1px solid #eee;
+      
+      &:hover {
+        background-color: #f9f9f9;
+      }
+      
+      .cell {
+        flex: 1;
+        padding: 12px 15px;
+        
+        &.ftp-value {
+          font-weight: 500;
+          color: #2196F3;
+        }
+        
+        .increase {
+          color: #4caf50;
+          font-weight: 500;
+        }
+        
+        .decrease {
+          color: #f44336;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  p {
+    color: #666;
+    font-size: 14px;
+  }
+} 

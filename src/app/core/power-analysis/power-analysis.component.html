@@ -1,0 +1,236 @@
+<div class="power-analysis-container">
+  <!-- Add navigation tabs -->
+  <div class="analysis-tabs">
+    <button
+      [class.active]="activeSection === 'best-efforts'"
+      (click)="setActiveSection('best-efforts')"
+    >
+      Best Efforts
+    </button>
+    <button [class.active]="activeSection === 'ftp'" (click)="setActiveSection('ftp')">
+      FTP Analysis
+    </button>
+  </div>
+
+  <!-- FTP Settings Section (always visible) -->
+  <div class="section ftp-section">
+    <h2>FTP Settings</h2>
+
+    <div class="ftp-card-container" *ngIf="activities$ | async as activities">
+      <!-- Manual FTP Input Card -->
+      <div class="ftp-card manual-ftp">
+        <h3>Manual FTP Setting</h3>
+        <div class="ftp-input-group">
+          <div class="ftp-value-display">
+            <span class="current-ftp">{{ userFTP }}</span>
+            <span class="ftp-unit">watts</span>
+          </div>
+          <div class="slider-container">
+            <input
+              type="range"
+              id="ftp-slider"
+              [(ngModel)]="userFTP"
+              min="50"
+              max="500"
+              step="1"
+              class="ftp-slider"
+            />
+            <div class="range-values">
+              <span>50W</span>
+              <span>500W</span>
+            </div>
+          </div>
+          <div class="ftp-manual-input">
+            <input
+              type="number"
+              id="ftp-number"
+              [(ngModel)]="userFTP"
+              min="50"
+              max="1000"
+              class="ftp-number-input"
+            />
+            <button (click)="saveFTP()" class="save-ftp-btn">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto FTP Calculation Cards -->
+      <div class="ftp-card auto-ftp">
+        <h3>Auto FTP Calculation</h3>
+
+        <div class="auto-ftp-methods">
+          <!-- Last 10 rides method -->
+          <div class="auto-ftp-method">
+            <div class="method-header">
+              <span class="method-name">Best of Last 10 Rides</span>
+              <span class="method-value">{{ calculateFTPFromLastRides(activities) }}W</span>
+            </div>
+            <p class="method-description">Highest estimated FTP from your most recent 10 rides</p>
+            <button
+              (click)="userFTP = calculateFTPFromLastRides(activities); saveFTP()"
+              class="use-estimate-btn"
+              [disabled]="calculateFTPFromLastRides(activities) <= 0"
+            >
+              Use This Estimate
+            </button>
+          </div>
+
+          <!-- Traditional 95% of 20min method -->
+          <div class="auto-ftp-method">
+            <div class="method-header">
+              <span class="method-name">20-Minute Best Effort</span>
+              <span class="method-value">{{ calculateEstimatedFTP(activities) }}W</span>
+            </div>
+            <p class="method-description">Based on 95% of your all-time 20-minute best effort</p>
+            <button
+              (click)="userFTP = calculateEstimatedFTP(activities); saveFTP()"
+              class="use-estimate-btn"
+              [disabled]="calculateEstimatedFTP(activities) <= 0"
+            >
+              Use This Estimate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="power-zones">
+      <h3>Power Zones</h3>
+      <div class="zones-container">
+        <div
+          *ngFor="let zone of powerZones"
+          class="zone-item"
+          [style.background-color]="zone.color"
+        >
+          <div class="zone-name">{{ zone.name }}</div>
+          <div class="zone-range">{{ formatPowerZone(zone.min, zone.max) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Best Efforts Section -->
+  <div *ngIf="activeSection === 'best-efforts'">
+    <div class="section best-efforts-section">
+      <h2>Best Efforts</h2>
+
+      <div class="no-data" *ngIf="!(bestEfforts$ | async)?.length">
+        <p>No activity data found. Upload some FIT files to see your best efforts.</p>
+      </div>
+
+      <div class="best-efforts-table" *ngIf="(bestEfforts$ | async)?.length">
+        <div class="table-header">
+          <div class="header-cell">Duration</div>
+          <div class="header-cell">Power (W)</div>
+          <div class="header-cell">% of FTP</div>
+          <div class="header-cell">Date</div>
+        </div>
+
+        <div class="table-row" *ngFor="let effort of bestEfforts$ | async">
+          <div class="cell">{{ effort.durationLabel }}</div>
+          <div class="cell power-cell" [style.color]="getPowerZone(effort.power).color">
+            {{ effort.power }}
+          </div>
+          <div class="cell">{{ (effort.power / userFTP) * 100 | number: '1.0-0' }}%</div>
+          <div class="cell">{{ effort.date ? (effort.date | date: 'mediumDate') : 'Unknown' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section power-curve-section">
+      <h2>Critical Power Curve</h2>
+
+      <div class="no-data" *ngIf="powerCurveData.length === 0">
+        <p>No activity data found. Upload some FIT files to see your power curve.</p>
+      </div>
+
+      <div class="chart-container" *ngIf="powerCurveData.length > 0">
+        <ngx-charts-line-chart
+          [view]="view"
+          [scheme]="colorScheme"
+          [results]="powerCurveData"
+          [gradient]="gradient"
+          [xAxis]="showXAxis"
+          [yAxis]="showYAxis"
+          [legend]="showLegend"
+          [showXAxisLabel]="showXAxisLabel"
+          [xAxisLabel]="xAxisLabel"
+          [showYAxisLabel]="showYAxisLabel"
+          [yAxisLabel]="yAxisLabel"
+        >
+        </ngx-charts-line-chart>
+      </div>
+    </div>
+  </div>
+
+  <!-- FTP Analysis Section -->
+  <div *ngIf="activeSection === 'ftp'">
+    <div class="section ftp-history-section">
+      <h2>FTP History</h2>
+
+      <!-- Add loading indicator -->
+      <div class="loading-indicator" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading FTP history...</p>
+      </div>
+
+      <!-- Rest of the FTP history content -->
+      <div *ngIf="!isLoading">
+        <div class="no-data" *ngIf="ftpHistory.length === 0">
+          <p>No FTP history available. Save your FTP to start tracking changes.</p>
+        </div>
+
+        <div class="ftp-history-container" *ngIf="ftpHistory.length > 0">
+          <!-- FTP History Chart -->
+          <div class="chart-container">
+            <ngx-charts-line-chart
+              [view]="view"
+              [scheme]="colorScheme"
+              [results]="getFtpChartData()"
+              [gradient]="false"
+              [xAxis]="true"
+              [yAxis]="true"
+              [legend]="false"
+              [showXAxisLabel]="true"
+              [xAxisLabel]="'Date'"
+              [showYAxisLabel]="true"
+              [yAxisLabel]="'FTP (watts)'"
+            >
+            </ngx-charts-line-chart>
+          </div>
+
+          <!-- FTP History Table -->
+          <div class="ftp-history-table">
+            <div class="table-header">
+              <div class="header-cell">Date</div>
+              <div class="header-cell">FTP (W)</div>
+              <div class="header-cell">Change</div>
+            </div>
+
+            <div
+              class="table-row"
+              *ngFor="let entry of ftpHistory.slice().reverse(); let i = index"
+            >
+              <div class="cell">{{ entry.date | date: 'medium' }}</div>
+              <div class="cell ftp-value">{{ entry.ftp }} W</div>
+              <div class="cell" *ngIf="i < ftpHistory.length - 1">
+                <span
+                  [class.increase]="entry.ftp > ftpHistory[ftpHistory.length - 2 - i].ftp"
+                  [class.decrease]="entry.ftp < ftpHistory[ftpHistory.length - 2 - i].ftp"
+                >
+                  {{ entry.ftp - ftpHistory[ftpHistory.length - 2 - i].ftp | number: '1.0-0' }} W
+                  ({{
+                    ((entry.ftp - ftpHistory[ftpHistory.length - 2 - i].ftp) /
+                      ftpHistory[ftpHistory.length - 2 - i].ftp) *
+                      100 | number: '1.1-1'
+                  }}%)
+                </span>
+              </div>
+              <div class="cell" *ngIf="i === ftpHistory.length - 1">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

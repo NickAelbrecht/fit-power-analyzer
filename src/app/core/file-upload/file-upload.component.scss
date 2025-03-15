@@ -1,0 +1,98 @@
+.upload-container {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  transition: border-color 0.3s;
+  
+  &.is-dragging {
+    border-color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.1);
+  }
+  
+  &.is-processing {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+}
+
+.upload-content {
+  cursor: pointer;
+}
+
+.upload-button {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}
+
+.processing-indicator {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  
+  .spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    
+    p {
+      margin: 0 0 0 10px;
+    }
+  }
+  
+  .spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2196F3;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+  
+  // Progress container and bar styles
+  .progress-container {
+    width: 100%;
+    background-color: #f3f3f3;
+    border-radius: 4px;
+    margin: 10px 0;
+    overflow: hidden;
+    height: 10px;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background-color: #2196F3;
+    transition: width 0.3s ease;
+  }
+  
+  .progress-text {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+  }
+}
+
+.error-message {
+  color: #f44336;
+  margin-top: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

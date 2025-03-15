@@ -1,0 +1,780 @@
+// Activity Detail Styles
+.activity-detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #333;
+}
+
+// Header styles
+.detail-header {
+  margin-bottom: 2rem;
+  
+  .back-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    color: #2196f3;
+    font-size: 1rem;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    
+    i {
+      margin-right: 0.5rem;
+    }
+    
+    &:hover {
+      color: #0d47a1;
+    }
+  }
+  
+  .activity-title {
+    display: flex;
+    align-items: center;
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+    
+    .activity-icon {
+      margin-right: 0.75rem;
+      font-size: 2rem;
+      color: #2196f3;
+    }
+  }
+  
+  .activity-date {
+    color: #757575;
+    font-size: 1.1rem;
+  }
+}
+
+// Activity summary styles
+.activity-summary {
+  margin-bottom: 2rem;
+  
+  .summary-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    
+    .card-header {
+      background-color: #f5f7fa;
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
+      padding: 1.5rem;
+      
+      .summary-item {
+        .item-label {
+          font-size: 0.9rem;
+          color: #757575;
+          margin-bottom: 0.5rem;
+        }
+        
+        .item-value {
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #333;
+          
+          &.id-value {
+            font-size: 0.9rem;
+            font-family: monospace;
+            color: #616161;
+            word-break: break-all;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Training overview section
+.training-overview-section {
+  margin-bottom: 3rem;
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    
+    h2 {
+      font-size: 1.8rem;
+      margin: 0;
+      color: #333;
+    }
+    
+    .data-count {
+      color: #757575;
+      font-size: 0.9rem;
+    }
+  }
+  
+  // Chart container
+  .chart-container {
+    width: 100%;
+    height: 450px;
+    margin-bottom: 1rem;
+    position: relative;
+    
+    ::ng-deep {
+      .ngx-charts {
+        .line-series .line {
+          stroke-width: 2.5px !important;
+        }
+        
+        .line-highlight {
+          stroke-width: 3px !important;
+        }
+        
+        .tooltip-anchor {
+          fill: rgba(0, 0, 0, 0.7);
+          stroke-width: 2px;
+          r: 4;
+        }
+        
+        // Chart legend styling
+        .chart-legend {
+          .legend-labels {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+          }
+        }
+      }
+    }
+  }
+  
+  // Training metrics
+  .training-metrics {
+    .metrics-card {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      height: 100%;
+      
+      .card-header {
+        background-color: #f5f7fa;
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      .metrics-grid {
+        padding: 1.5rem;
+        
+        .metrics-item {
+          margin-bottom: 1.25rem;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          .item-label {
+            display: block;
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+          }
+          
+          .item-value {
+            display: block;
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: #333;
+          }
+        }
+      }
+    }
+  }
+  
+  // Zone and Impact Layout - Side by Side
+  .zone-impact-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  // Zone distribution
+  .zone-distribution {
+    .zone-card {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      height: 100%;
+      
+      .card-header {
+        background-color: #f5f7fa;
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      .zone-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.5rem;
+        
+        .zone-bar {
+          position: relative;
+          height: 40px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          padding: 0 1rem;
+          min-width: 50px;
+          width: 100%; // Fixed width base
+          max-width: 100%;
+          
+          .zone-label, .zone-percent {
+            font-weight: 600;
+            color: #333;
+          }
+          
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: var(--zone-width, 0%);
+            border-radius: 6px;
+            z-index: 1;
+          }
+          
+          // Apply zone colors based on classes
+          &.zone1 {
+            background-color: rgba(33, 150, 243, 0.2);
+            &::before {
+              background-color: #2196f3;
+            }
+          }
+          
+          &.zone2 {
+            background-color: rgba(76, 175, 80, 0.2);
+            &::before {
+              background-color: #4caf50;
+            }
+          }
+          
+          &.zone3 {
+            background-color: rgba(139, 195, 74, 0.2);
+            &::before {
+              background-color: #8bc34a;
+            }
+          }
+          
+          &.zone4 {
+            background-color: rgba(255, 193, 7, 0.2);
+            &::before {
+              background-color: #ffc107;
+            }
+          }
+          
+          &.zone5 {
+            background-color: rgba(255, 152, 0, 0.2);
+            &::before {
+              background-color: #ff9800;
+            }
+          }
+          
+          &.zone6 {
+            background-color: rgba(244, 67, 54, 0.2);
+            &::before {
+              background-color: #f44336;
+            }
+          }
+          
+          &.zone7 {
+            background-color: rgba(156, 39, 176, 0.2);
+            &::before {
+              background-color: #9c27b0;
+            }
+          }
+        }
+      }
+      
+      .zone-legend {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        
+        .zone-item {
+          display: flex;
+          align-items: center;
+          
+          .zone-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            
+            &.zone1 {
+              background-color: #2196f3;
+            }
+            
+            &.zone2 {
+              background-color: #4caf50;
+            }
+            
+            &.zone3 {
+              background-color: #8bc34a;
+            }
+            
+            &.zone4 {
+              background-color: #ffc107;
+            }
+            
+            &.zone5 {
+              background-color: #ff9800;
+            }
+            
+            &.zone6 {
+              background-color: #f44336;
+            }
+            
+            &.zone7 {
+              background-color: #9c27b0;
+            }
+          }
+          
+          .zone-name {
+            font-size: 0.85rem;
+            color: #616161;
+          }
+        }
+      }
+    }
+  }
+  
+  // Training impact
+  .training-impact {
+    .impact-card {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      height: 100%;
+      
+      .card-header {
+        background-color: #f5f7fa;
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      .impact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+        
+        .impact-item {
+          background-color: #f5f7fa;
+          border-radius: 8px;
+          padding: 1.25rem;
+          text-align: center;
+          transition: all 0.3s ease;
+          
+          i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          .impact-label {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+          }
+          
+          .impact-rating {
+            font-size: 0.9rem;
+            font-weight: 500;
+          }
+          
+          &.impact-low {
+            background-color: #e3f2fd;
+            i, .impact-rating {
+              color: #2196f3;
+            }
+          }
+          
+          &.impact-medium-low {
+            background-color: #e8f5e9;
+            i, .impact-rating {
+              color: #4caf50;
+            }
+          }
+          
+          &.impact-medium {
+            background-color: #fff8e1;
+            i, .impact-rating {
+              color: #ffc107;
+            }
+          }
+          
+          &.impact-medium-high {
+            background-color: #fff3e0;
+            i, .impact-rating {
+              color: #ff9800;
+            }
+          }
+          
+          &.impact-high {
+            background-color: #ffebee;
+            i, .impact-rating {
+              color: #f44336;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.activity-not-found {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  
+  .not-found-message {
+    text-align: center;
+    max-width: 400px;
+    
+    i {
+      font-size: 4rem;
+      color: #e0e0e0;
+      margin-bottom: 1rem;
+    }
+    
+    h2 {
+      margin: 0 0 1rem 0;
+      color: #333;
+    }
+    
+    p {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    
+    .back-button {
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      
+      &:hover {
+        background-color: #0d8aee;
+      }
+    }
+  }
+}
+
+// Custom Zone Colors - Only keeping what Bootstrap doesn't provide
+.zone1 {
+  color: #2196f3 !important; // Active Recovery - Blue
+}
+
+.zone2 {
+  color: #4caf50 !important; // Endurance - Green
+}
+
+.zone3 {
+  color: #8bc34a !important; // Tempo - Light Green
+}
+
+.zone4 {
+  color: #ffc107 !important; // Threshold - Yellow
+}
+
+.zone5 {
+  color: #ff9800 !important; // VO2 Max - Orange
+}
+
+.zone6 {
+  color: #f44336 !important; // Anaerobic - Red
+}
+
+.zone7 {
+  color: #9c27b0 !important; // Neuromuscular - Purple
+}
+
+// Zone bar styles - these are specific to our component
+.zone-bar {
+  position: relative;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--zone-width, 0%);
+    z-index: 1;
+  }
+  
+  .zone-label, .zone-percent {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  // Zone colors
+  &.zone1 {
+    background-color: rgba(33, 150, 243, 0.2);
+    &::before {
+      background-color: #2196f3;
+    }
+  }
+  
+  &.zone2 {
+    background-color: rgba(76, 175, 80, 0.2);
+    &::before {
+      background-color: #4caf50;
+    }
+  }
+  
+  &.zone3 {
+    background-color: rgba(139, 195, 74, 0.2);
+    &::before {
+      background-color: #8bc34a;
+    }
+  }
+  
+  &.zone4 {
+    background-color: rgba(255, 193, 7, 0.2);
+    &::before {
+      background-color: #ffc107;
+    }
+  }
+  
+  &.zone5 {
+    background-color: rgba(255, 152, 0, 0.2);
+    &::before {
+      background-color: #ff9800;
+    }
+  }
+  
+  &.zone6 {
+    background-color: rgba(244, 67, 54, 0.2);
+    &::before {
+      background-color: #f44336;
+    }
+  }
+  
+  &.zone7 {
+    background-color: rgba(156, 39, 176, 0.2);
+    &::before {
+      background-color: #9c27b0;
+    }
+  }
+}
+
+// Zone color boxes for the legend
+.zone-color {
+  width: 16px;
+  height: 16px;
+  
+  &.zone1 {
+    background-color: #2196f3;
+  }
+  
+  &.zone2 {
+    background-color: #4caf50;
+  }
+  
+  &.zone3 {
+    background-color: #8bc34a;
+  }
+  
+  &.zone4 {
+    background-color: #ffc107;
+  }
+  
+  &.zone5 {
+    background-color: #ff9800;
+  }
+  
+  &.zone6 {
+    background-color: #f44336;
+  }
+  
+  &.zone7 {
+    background-color: #9c27b0;
+  }
+}
+
+// Impact items
+.impact-item {
+  &.impact-low {
+    background-color: #e3f2fd;
+    i, div {
+      color: #2196f3;
+    }
+  }
+  
+  &.impact-medium-low {
+    background-color: #e8f5e9;
+    i, div {
+      color: #4caf50;
+    }
+  }
+  
+  &.impact-medium {
+    background-color: #fff8e1;
+    i, div {
+      color: #ffc107;
+    }
+  }
+  
+  &.impact-medium-high {
+    background-color: #fff3e0;
+    i, div {
+      color: #ff9800;
+    }
+  }
+  
+  &.impact-high {
+    background-color: #ffebee;
+    i, div {
+      color: #f44336;
+    }
+  }
+}
+
+// Chart container styles
+.chart-container {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+  
+  ::ng-deep {
+    .ngx-charts {
+      display: block;
+      width: 100% !important;
+      
+      .line-chart {
+        width: 100% !important;
+      }
+      
+      // Enhanced chart styling
+      .chart-legend {
+        padding: 8px !important;
+        border-radius: 4px !important;
+        
+        .legend-labels {
+          background-color: rgba(255, 255, 255, 0.9) !important;
+          border-radius: 4px !important;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+          padding: 8px !important;
+        }
+        
+        .legend-label {
+          margin: 6px 0 !important;
+          
+          .legend-label-text {
+            font-weight: 500 !important;
+          }
+        }
+      }
+      
+      // Enhanced grid and axes
+      .grid-panel.odd {
+        fill: rgba(0, 0, 0, 0.02) !important;
+      }
+      
+      .line-series {
+        .line {
+          stroke-width: 2.5px !important;
+        }
+      }
+      
+      .line-highlight {
+        stroke-width: 1.5px !important;
+      }
+      
+      // Better axis styling
+      .axis {
+        .tick {
+          line {
+            stroke: rgba(0, 0, 0, 0.1) !important;
+            stroke-dasharray: 2,2;
+          }
+          
+          text {
+            font-size: 11px !important;
+            fill: #666 !important;
+          }
+        }
+        
+        .axis-label {
+          font-size: 13px !important;
+          font-weight: 500 !important;
+          fill: #555 !important;
+        }
+      }
+      
+      // Reference lines styling
+      .reference-line {
+        stroke-width: 1.5px !important;
+        stroke-dasharray: 2,2 !important;
+        
+        .reference-label {
+          font-size: 11px !important;
+        }
+      }
+    }
+  }
+}
+
+// For small screens, ensure the view dimensions work
+@media (max-width: 768px) {
+  .activity-detail-container {
+    padding: 1rem;
+  }
+  
+  .activity-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .summary-grid, .metrics-grid, .impact-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .zone-impact-container, .summary-intensity-container {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .view {
+    width: 100% !important;
+    height: 300px !important;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+}

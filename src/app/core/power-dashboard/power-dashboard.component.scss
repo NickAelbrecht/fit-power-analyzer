@@ -1,0 +1,27 @@
+// Minimal custom styling, we're relying on Bootstrap for most of our styling
+// Only include styles that are necessary for the chart functionality
+
+// Chart container styling
+#chart-container {
+  position: relative;
+  width: 100%;
+  
+  ::ng-deep {
+    // Make chart responsive
+    .ngx-charts {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    // Improve chart styling
+    .line-series .line {
+      stroke-width: 2;
+    }
+    
+    // Make tooltips nice
+    .tooltip-anchor {
+      fill: currentColor;
+    }
+  }
+} 

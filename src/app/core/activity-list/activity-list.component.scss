@@ -1,0 +1,444 @@
+// Variables
+$primary-color: #2196F3;
+$secondary-color: #03A9F4;
+$background-color: #f5f7fa;
+$card-background: #ffffff;
+$text-primary: #333333;
+$text-secondary: #757575;
+$border-radius: 12px;
+$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+$transition-speed: 0.3s;
+
+// Power zone colors
+$zone1-color: #50C4AA; // Active Recovery - Teal
+$zone2-color: #4CAF50; // Endurance - Green
+$zone3-color: #8BC34A; // Tempo - Light Green
+$zone4-color: #FFEB3B; // Threshold - Yellow
+$zone5-color: #FF9800; // VO2 Max - Orange
+$zone6-color: #FF5722; // Anaerobic - Deep Orange
+$zone7-color: #F44336; // Neuromuscular - Red
+
+// Activity type colors
+$cycling-color: #2196F3;
+$running-color: #FF5722;
+$swimming-color: #00BCD4;
+$walking-color: #8BC34A;
+$hiking-color: #795548;
+$strength-color: #9C27B0;
+
+.activity-list-container {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header-section {
+  position: sticky;
+  top: 0;
+  background-color: $card-background;
+  z-index: 10;
+  padding: 0 0 15px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  
+  .title-area {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 15px;
+    
+    h2 {
+      margin: 0;
+      color: $text-primary;
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+    
+    .activity-count {
+      margin-left: 12px;
+      color: $text-secondary;
+      font-size: 0.9rem;
+    }
+  }
+  
+  .actions-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    
+    .search-filter {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+      
+      .search-input {
+        width: 100%;
+        padding: 10px 12px 10px 40px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 24px;
+        font-size: 0.9rem;
+        transition: all $transition-speed ease;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba($primary-color, 0.2);
+        }
+      }
+      
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $text-secondary;
+        font-size: 20px;
+      }
+    }
+    
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+      
+      .filter-btn {
+        background-color: $card-background;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        color: $text-secondary;
+        cursor: pointer;
+        transition: all $transition-speed ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        
+        i {
+          font-size: 18px;
+        }
+        
+        &:hover {
+          background-color: rgba($primary-color, 0.05);
+        }
+        
+        &.active {
+          background-color: $primary-color;
+          color: white;
+          border-color: $primary-color;
+        }
+      }
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .clear-button {
+      background-color: #607D8B; // Blue-gray
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all $transition-speed ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      
+      i {
+        font-size: 18px;
+      }
+      
+      &:hover {
+        background-color: #455A64;
+      }
+    }
+  }
+}
+
+.no-activities {
+  background-color: rgba($background-color, 0.5);
+  padding: 40px 20px;
+  border-radius: $border-radius;
+  text-align: center;
+  color: $text-secondary;
+  box-shadow: $box-shadow;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  
+  .empty-icon {
+    font-size: 48px;
+    color: rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: $text-primary;
+  }
+  
+  span {
+    font-size: 0.9rem;
+  }
+}
+
+.activity-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+  
+  pre {
+    grid-column: 1 / -1;
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: $border-radius;
+    overflow: auto;
+    max-height: 200px;
+    font-size: 12px;
+  }
+}
+
+.activity-card {
+  background-color: $card-background;
+  border-radius: $border-radius;
+  overflow: hidden;
+  box-shadow: $box-shadow;
+  transition: transform $transition-speed ease, box-shadow $transition-speed ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  min-height: 300px; /* Ensure cards have a minimum height */
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  &.selected {
+    border: 2px solid $primary-color;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba($primary-color, 0.25);
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background-color: $primary-color;
+    color: white;
+    
+    .activity-type-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      margin-right: 12px;
+      
+      i {
+        font-size: 20px;
+      }
+    }
+    
+    .activity-name {
+      flex: 1;
+      font-weight: 500;
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .delete-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color $transition-speed ease;
+      
+      i {
+        font-size: 18px;
+      }
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+    
+    // Activity type color variations
+    &.activity-type-cycling {
+      background-color: $cycling-color;
+    }
+    
+    &.activity-type-running {
+      background-color: $running-color;
+    }
+    
+    &.activity-type-swimming {
+      background-color: $swimming-color;
+    }
+    
+    &.activity-type-walking {
+      background-color: $walking-color;
+    }
+    
+    &.activity-type-hiking {
+      background-color: $hiking-color;
+    }
+    
+    &.activity-type-strength_training {
+      background-color: $strength-color;
+    }
+  }
+  
+  .activity-details {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: $card-background; /* Explicitly set background color */
+    
+    .detail-group {
+      margin-bottom: 16px;
+      
+      .detail-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        color: $text-secondary;
+        font-size: 14px;
+        
+        i {
+          margin-right: 10px;
+          font-size: 18px;
+          color: $text-secondary;
+          width: 20px;
+          text-align: center;
+        }
+        
+        span {
+          flex: 1;
+        }
+      }
+    }
+  }
+  
+  .power-metrics {
+    display: flex;
+    padding: 12px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 12px;
+    
+    .metric {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 6px;
+      transition: background-color $transition-speed ease;
+      
+      .metric-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: $text-primary;
+      }
+      
+      .metric-label {
+        font-size: 12px;
+        color: $text-secondary;
+        margin-top: 4px;
+      }
+      
+      // Power zone styling
+      &.zone1 {
+        background-color: rgba($zone1-color, 0.1);
+        .metric-value { color: $zone1-color; }
+      }
+      
+      &.zone2 {
+        background-color: rgba($zone2-color, 0.1);
+        .metric-value { color: $zone2-color; }
+      }
+      
+      &.zone3 {
+        background-color: rgba($zone3-color, 0.1);
+        .metric-value { color: $zone3-color; }
+      }
+      
+      &.zone4 {
+        background-color: rgba($zone4-color, 0.1);
+        .metric-value { color: darken($zone4-color, 15%); }
+      }
+      
+      &.zone5 {
+        background-color: rgba($zone5-color, 0.1);
+        .metric-value { color: $zone5-color; }
+      }
+      
+      &.zone6 {
+        background-color: rgba($zone6-color, 0.1);
+        .metric-value { color: $zone6-color; }
+      }
+      
+      &.zone7 {
+        background-color: rgba($zone7-color, 0.1);
+        .metric-value { color: $zone7-color; }
+      }
+    }
+  }
+  
+  .activity-chart {
+    margin-top: auto;
+    
+    .power-sparkline {
+      height: 30px;
+      border-radius: 4px;
+      width: 100%;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .activity-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-section {
+    .actions-area {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .search-filter {
+        width: 100%;
+      }
+      
+      .filter-buttons {
+        justify-content: space-between;
+      }
+    }
+  }
+} 

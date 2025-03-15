@@ -1,0 +1,56 @@
+<div class="card">
+  <div class="card-body">
+    <div *ngIf="selectedActivity$ | async as activity; else noActivity">
+      <div class="mb-3">
+        <h5 class="card-title">{{ activity.name }}</h5>
+        <div class="d-flex flex-wrap">
+          <div class="me-4 mb-2">
+            <span class="fw-bold">Avg Power:</span> {{ activity.avgPower }}W
+          </div>
+          <div class="me-4 mb-2">
+            <span class="fw-bold">Max Power:</span> {{ activity.maxPower }}W
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart container -->
+      <div class="chart-container" #chartContainer>
+        <div *ngIf="(powerChartData$ | async)?.length; else noData" class="chart-wrapper">
+          <ngx-charts-line-chart
+            [view]="view"
+            [scheme]="colorScheme"
+            [results]="powerChartData$ | async"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="xAxisLabel"
+            [yAxisLabel]="yAxisLabel"
+            [timeline]="true"
+            [autoScale]="true"
+            [curve]="curve"
+            [animations]="false"
+            [roundDomains]="true"
+          >
+          </ngx-charts-line-chart>
+        </div>
+
+        <ng-template #noData>
+          <div class="no-data-message">
+            <p>No power data available. Select an activity to view power information.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <ng-template #noActivity>
+      <div class="text-center py-4">
+        <p class="text-muted mb-0">
+          No activity selected. Please select an activity from the list.
+        </p>
+      </div>
+    </ng-template>
+  </div>
+</div>

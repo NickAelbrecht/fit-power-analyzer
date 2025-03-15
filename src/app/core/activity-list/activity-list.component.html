@@ -1,0 +1,139 @@
+<div class="activity-list-container">
+  <div class="header-section">
+    <div class="title-area">
+      <h2>Your Activities</h2>
+      <span class="activity-count" *ngIf="(activities$ | async)?.length">
+        {{ (activities$ | async)?.length }} activities
+      </span>
+    </div>
+
+    <div class="actions-area">
+      <div class="search-filter">
+        <input
+          type="text"
+          placeholder="Search activities..."
+          class="search-input"
+          [(ngModel)]="searchTerm"
+          (input)="filterActivities()"
+        />
+        <i class="material-icons search-icon">search</i>
+      </div>
+
+      <div class="filter-buttons">
+        <button
+          class="filter-btn"
+          [class.active]="activeFilter === 'all'"
+          (click)="setFilter('all')"
+        >
+          All
+        </button>
+        <button
+          class="filter-btn"
+          [class.active]="activeFilter === 'cycling'"
+          (click)="setFilter('cycling')"
+        >
+          <i class="material-icons">directions_bike</i>
+        </button>
+        <button
+          class="filter-btn"
+          [class.active]="activeFilter === 'running'"
+          (click)="setFilter('running')"
+        >
+          <i class="material-icons">directions_run</i>
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button
+          *ngIf="(activities$ | async)?.length && (searchTerm || activeFilter !== 'all')"
+          class="clear-button"
+          (click)="clearAllActivities()"
+        >
+          <i class="material-icons">filter_alt_off</i>
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!(filteredActivities$ | async)?.length" class="no-activities">
+    <i class="material-icons empty-icon">fitness_center</i>
+    <p>No activities found</p>
+    <span *ngIf="searchTerm || activeFilter !== 'all'">Try adjusting your filters</span>
+    <span *ngIf="!(activities$ | async)?.length">Upload a .FIT file to get started</span>
+  </div>
+
+  <!-- Activity cards grid -->
+  <div class="activity-cards">
+    <ng-container *ngIf="debug">
+      <pre>{{ filteredActivities$ | async | json }}</pre>
+    </ng-container>
+
+    <ng-container *ngIf="filteredActivities$ | async as activities">
+      <div
+        *ngFor="let activity of activities"
+        class="activity-card"
+        [class.selected]="(selectedActivityId$ | async) === activity.id"
+        (click)="selectActivity(activity.id)"
+      >
+        <div class="card-header" [ngClass]="getActivityTypeClass(activity)">
+          <div class="activity-type-icon">
+            <i class="material-icons">{{ getActivityIcon(activity) }}</i>
+          </div>
+          <div class="activity-name">{{ formatActivityName(activity) }}</div>
+          <button class="delete-btn" (click)="removeActivity($event, activity.id)">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+
+        <div class="activity-details">
+          <div class="detail-group">
+            <div class="detail-item">
+              <i class="material-icons">event</i>
+              <span>{{ activity.date | date: 'MMM d, y' }}</span>
+            </div>
+
+            <div class="detail-item">
+              <i class="material-icons">schedule</i>
+              <span>{{ activity.date | date: 'h:mm a' }}</span>
+            </div>
+
+            <div class="detail-item">
+              <i class="material-icons">timer</i>
+              <span>{{ formatDuration(activity.totalTime) }}</span>
+            </div>
+          </div>
+
+          <div class="power-metrics">
+            <div class="metric" [ngClass]="getPowerZoneClass(activity.avgPower)">
+              <div class="metric-value">{{ activity.avgPower }}</div>
+              <div class="metric-label">Avg Power</div>
+            </div>
+
+            <div class="metric" [ngClass]="getPowerZoneClass(activity.maxPower)">
+              <div class="metric-value">{{ activity.maxPower }}</div>
+              <div class="metric-label">Max Power</div>
+            </div>
+
+            <div
+              class="metric"
+              [ngClass]="getPowerZoneClass(activity.normalizedPower || calculateNP(activity))"
+            >
+              <div class="metric-value">
+                {{ activity.normalizedPower || calculateNP(activity) }}
+              </div>
+              <div class="metric-label">Normalized Power</div>
+            </div>
+          </div>
+
+          <div class="activity-chart">
+            <div
+              class="power-sparkline"
+              [style.background]="generatePowerSparkline(activity)"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

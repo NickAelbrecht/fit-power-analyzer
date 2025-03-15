@@ -1,0 +1,251 @@
+<div class="container-fluid py-4" *ngIf="activity$ | async as activity">
+  <!-- Header Section -->
+  <div class="mb-4">
+    <button
+      class="btn btn-link text-decoration-none d-flex align-items-center ps-0 mb-2"
+      (click)="goBack()"
+    >
+      <i class="material-icons me-2">arrow_back</i>
+      Back to Activities
+    </button>
+    <h1 class="d-flex align-items-center mb-1">
+      <i class="material-icons fs-2 me-2 text-primary">{{ getActivityIcon(activity) }}</i>
+      {{ formatActivityName(activity) }}
+    </h1>
+    <div class="text-secondary">{{ activity.date | date: 'EEEE, MMMM d, y • h:mm a' }}</div>
+  </div>
+
+  <!-- Activity Summary and Training Intensity side by side -->
+  <div class="row mb-4">
+    <div class="col-md-8 mb-3 mb-md-0">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-light fw-bold">Activity Summary</div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-sm-6 col-lg-4">
+              <div class="text-secondary mb-1 small">Type</div>
+              <div class="fw-bold fs-5">{{ activity.type | titlecase }}</div>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+              <div class="text-secondary mb-1 small">Duration</div>
+              <div class="fw-bold fs-5">{{ formatDuration(activity.totalTime) }}</div>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+              <div class="text-secondary mb-1 small">Average Power</div>
+              <div class="fw-bold fs-5" [ngClass]="getPowerZoneClass(activity.avgPower)">
+                {{ activity.avgPower }} W
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+              <div class="text-secondary mb-1 small">Max Power</div>
+              <div class="fw-bold fs-5" [ngClass]="getPowerZoneClass(activity.maxPower)">
+                {{ activity.maxPower }} W
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+              <div class="text-secondary mb-1 small">Normalized Power</div>
+              <div
+                class="fw-bold fs-5"
+                [ngClass]="getPowerZoneClass(activity.normalizedPower || calculateNP(activity))"
+              >
+                {{ activity.normalizedPower || calculateNP(activity) }} W
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+              <div class="text-secondary mb-1 small">Date</div>
+              <div class="fw-bold fs-5">{{ activity.date | date: 'MMM d, y' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Training Intensity Metrics -->
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-light fw-bold">Training Intensity</div>
+        <div class="card-body">
+          <div class="d-flex flex-column gap-3">
+            <div>
+              <div class="text-secondary mb-1">Intensity Factor (IF)</div>
+              <div class="fw-bold fs-3">{{ calculateIF(activity) | number: '1.2-2' }}</div>
+            </div>
+            <div>
+              <div class="text-secondary mb-1">Training Stress Score (TSS)</div>
+              <div class="fw-bold fs-3">{{ calculateTSS(activity) | number: '1.0-0' }}</div>
+            </div>
+            <div>
+              <div class="text-secondary mb-1">Variability Index (VI)</div>
+              <div class="fw-bold fs-3">{{ calculateVI(activity) | number: '1.2-2' }}</div>
+            </div>
+            <div>
+              <div class="text-secondary mb-1">Work (kJ)</div>
+              <div class="fw-bold fs-3">{{ calculateWork(activity) | number: '1.0-0' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-5" *ngIf="activity.powerData && activity.powerData.length > 0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">Training Overview</h2>
+      <div class="small text-secondary">{{ activity.powerData.length }} data points</div>
+    </div>
+
+    <!-- Power and Heart Rate Chart -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Power and Heart Rate</span>
+        <span class="badge bg-primary">Interactive</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <ngx-charts-line-chart
+            [view]="chartDimensions"
+            [scheme]="colorScheme"
+            [results]="chartData$ | async"
+            [gradient]="true"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="xAxisLabel"
+            [yAxisLabel]="yAxisLabel"
+            [timeline]="timeline"
+            [autoScale]="true"
+            [curve]="curve"
+            [tooltipDisabled]="false"
+            [animations]="true"
+            [showGridLines]="true"
+            [roundDomains]="false"
+            [rangeFillOpacity]="0.15"
+            [trimXAxisTicks]="true"
+            [maxXAxisTickLength]="16"
+            [trimYAxisTicks]="true"
+            [maxYAxisTickLength]="16"
+          >
+          </ngx-charts-line-chart>
+        </div>
+        <div class="d-flex justify-content-center mt-3 text-secondary small">
+          <div class="d-flex align-items-center me-3">
+            <i class="material-icons small me-1">touch_app</i>
+            <span>Click and drag to zoom</span>
+          </div>
+          <div class="d-flex align-items-center me-3">
+            <i class="material-icons small me-1">double_arrow</i>
+            <span>Hover for details</span>
+          </div>
+          <div class="d-flex align-items-center">
+            <i class="material-icons small me-1">refresh</i>
+            <span>Double-click to reset</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Training Zones Distribution and Training Impact - Side by Side -->
+    <div class="row">
+      <!-- Training Zones Distribution -->
+      <div class="col-md-6 mb-4 mb-md-0">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light fw-bold">Power Zone Distribution</div>
+          <div class="card-body">
+            <div class="d-flex flex-column gap-3 mb-3">
+              <div
+                *ngFor="let zone of getZoneDistribution(activity)"
+                class="zone-bar position-relative rounded"
+                [ngClass]="zone.name"
+                [style.--zone-width]="zone.percentage + '%'"
+              >
+                <div class="zone-label fw-medium position-relative z-2 text-dark ps-3 py-2">
+                  {{ zone.label }}
+                </div>
+                <div
+                  class="zone-percent position-absolute end-0 top-50 translate-middle-y z-2 text-dark pe-3"
+                >
+                  {{ zone.percentage | number: '1.0-0' }}%
+                </div>
+              </div>
+            </div>
+            <div class="row row-cols-2 g-3">
+              <div class="col d-flex align-items-center" *ngFor="let zone of powerZones">
+                <div class="zone-color rounded-1 me-2" [ngClass]="zone.name"></div>
+                <div class="small text-secondary">{{ getPowerZoneLabel(zone.name) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Impact -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light fw-bold">Training Impact</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div
+                  class="p-3 rounded-3 text-center impact-item"
+                  [ngClass]="getImpactLevel(getEnduranceImpact(activity))"
+                >
+                  <i class="material-icons fs-2 mb-2">trending_up</i>
+                  <div class="fw-bold mb-1">Endurance (Base)</div>
+                  <div>{{ getImpactText(getEnduranceImpact(activity)) }}</div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div
+                  class="p-3 rounded-3 text-center impact-item"
+                  [ngClass]="getImpactLevel(getThresholdImpact(activity))"
+                >
+                  <i class="material-icons fs-2 mb-2">speed</i>
+                  <div class="fw-bold mb-1">Threshold</div>
+                  <div>{{ getImpactText(getThresholdImpact(activity)) }}</div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div
+                  class="p-3 rounded-3 text-center impact-item"
+                  [ngClass]="getImpactLevel(getVO2MaxImpact(activity))"
+                >
+                  <i class="material-icons fs-2 mb-2">flash_on</i>
+                  <div class="fw-bold mb-1">VO2 Max</div>
+                  <div>{{ getImpactText(getVO2MaxImpact(activity)) }}</div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div
+                  class="p-3 rounded-3 text-center impact-item"
+                  [ngClass]="getImpactLevel(getAnaerobicImpact(activity))"
+                >
+                  <i class="material-icons fs-2 mb-2">whatshot</i>
+                  <div class="fw-bold mb-1">Anaerobic</div>
+                  <div>{{ getImpactText(getAnaerobicImpact(activity)) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Activity Not Found -->
+<div
+  class="d-flex align-items-center justify-content-center min-vh-50"
+  *ngIf="!(activity$ | async)"
+>
+  <div class="text-center">
+    <i class="material-icons fs-1 text-secondary mb-3">search</i>
+    <h2>Activity Not Found</h2>
+    <p class="text-secondary mb-4">
+      The activity you're looking for could not be found. It may have been deleted or the link might
+      be incorrect.
+    </p>
+    <button class="btn btn-primary" (click)="goBack()">Go to Activities List</button>
+  </div>
+</div>
