@@ -63,13 +63,27 @@
           <div class="auto-ftp-method">
             <div class="method-header">
               <span class="method-name">Best of Last 10 Rides</span>
-              <span class="method-value">{{ calculateFTPFromLastRides(activities) }}W</span>
+              <span class="method-value">
+                <ng-container
+                  *ngIf="getEstimatedFTPFromLastRides(activities) > 0; else noFtpLastRides"
+                >
+                  {{ getEstimatedFTPFromLastRides(activities) }}W
+                </ng-container>
+                <ng-template #noFtpLastRides>
+                  <span class="text-muted">Not available</span>
+                </ng-template>
+              </span>
             </div>
-            <p class="method-description">Highest estimated FTP from your most recent 10 rides</p>
+            <p class="method-description">
+              Highest estimated FTP from your recent cycling activities with power data.
+              <br /><small *ngIf="getEstimatedFTPFromLastRides(activities) <= 0" class="text-muted">
+                Upload more cycling activities with power data to use this method.
+              </small>
+            </p>
             <button
-              (click)="userFTP = calculateFTPFromLastRides(activities); saveFTP()"
+              (click)="userFTP = getEstimatedFTPFromLastRides(activities); saveFTP()"
               class="use-estimate-btn"
-              [disabled]="calculateFTPFromLastRides(activities) <= 0"
+              [disabled]="getEstimatedFTPFromLastRides(activities) <= 0"
             >
               Use This Estimate
             </button>
@@ -79,13 +93,25 @@
           <div class="auto-ftp-method">
             <div class="method-header">
               <span class="method-name">20-Minute Best Effort</span>
-              <span class="method-value">{{ calculateEstimatedFTP(activities) }}W</span>
+              <span class="method-value">
+                <ng-container *ngIf="getEstimatedFTPFrom20Min(activities) > 0; else noFtp20min">
+                  {{ getEstimatedFTPFrom20Min(activities) }}W
+                </ng-container>
+                <ng-template #noFtp20min>
+                  <span class="text-muted">Not available</span>
+                </ng-template>
+              </span>
             </div>
-            <p class="method-description">Based on 95% of your all-time 20-minute best effort</p>
+            <p class="method-description">
+              Based on 95% of your all-time 20-minute best power output.
+              <br /><small *ngIf="getEstimatedFTPFrom20Min(activities) <= 0" class="text-muted">
+                Need activities with 20+ minutes of continuous power data.
+              </small>
+            </p>
             <button
-              (click)="userFTP = calculateEstimatedFTP(activities); saveFTP()"
+              (click)="userFTP = getEstimatedFTPFrom20Min(activities); saveFTP()"
               class="use-estimate-btn"
-              [disabled]="calculateEstimatedFTP(activities) <= 0"
+              [disabled]="getEstimatedFTPFrom20Min(activities) <= 0"
             >
               Use This Estimate
             </button>
@@ -126,14 +152,18 @@
           <div class="header-cell">Date</div>
         </div>
 
-        <div class="table-row" *ngFor="let effort of bestEfforts$ | async">
-          <div class="cell">{{ effort.durationLabel }}</div>
-          <div class="cell power-cell" [style.color]="getPowerZone(effort.power).color">
-            {{ effort.power }}
+        <ng-container *ngIf="bestEfforts$ | async as efforts">
+          <div class="table-row" *ngFor="let effort of efforts">
+            <div class="cell">{{ effort?.durationLabel || 'N/A' }}</div>
+            <div class="cell power-cell" [style.color]="getPowerZone(effort?.power || 0).color">
+              {{ effort?.power || 0 }}
+            </div>
+            <div class="cell">{{ ((effort?.power || 0) / userFTP) * 100 | number: '1.0-0' }}%</div>
+            <div class="cell">
+              {{ effort?.date ? (effort.date | date: 'mediumDate') : 'Unknown' }}
+            </div>
           </div>
-          <div class="cell">{{ (effort.power / userFTP) * 100 | number: '1.0-0' }}%</div>
-          <div class="cell">{{ effort.date ? (effort.date | date: 'mediumDate') : 'Unknown' }}</div>
-        </div>
+        </ng-container>
       </div>
     </div>
 
@@ -181,52 +211,60 @@
         </div>
 
         <div class="ftp-history-container" *ngIf="ftpHistory.length > 0">
-          <!-- FTP History Chart -->
-          <div class="chart-container">
-            <ngx-charts-line-chart
-              [view]="view"
-              [scheme]="colorScheme"
-              [results]="getFtpChartData()"
-              [gradient]="false"
-              [xAxis]="true"
-              [yAxis]="true"
-              [legend]="false"
-              [showXAxisLabel]="true"
-              [xAxisLabel]="'Date'"
-              [showYAxisLabel]="true"
-              [yAxisLabel]="'FTP (watts)'"
-            >
-            </ngx-charts-line-chart>
-          </div>
-
-          <!-- FTP History Table -->
-          <div class="ftp-history-table">
-            <div class="table-header">
-              <div class="header-cell">Date</div>
-              <div class="header-cell">FTP (W)</div>
-              <div class="header-cell">Change</div>
+          <!-- Side-by-side layout for chart and table -->
+          <div class="ftp-history-flex-layout">
+            <!-- FTP History Chart -->
+            <div class="chart-container">
+              <ngx-charts-line-chart
+                [view]="view"
+                [scheme]="colorScheme"
+                [results]="getFtpChartData()"
+                [gradient]="false"
+                [xAxis]="true"
+                [yAxis]="true"
+                [legend]="false"
+                [showXAxisLabel]="true"
+                [xAxisLabel]="'Date'"
+                [showYAxisLabel]="true"
+                [yAxisLabel]="'FTP (watts)'"
+              >
+              </ngx-charts-line-chart>
             </div>
 
-            <div
-              class="table-row"
-              *ngFor="let entry of ftpHistory.slice().reverse(); let i = index"
-            >
-              <div class="cell">{{ entry.date | date: 'medium' }}</div>
-              <div class="cell ftp-value">{{ entry.ftp }} W</div>
-              <div class="cell" *ngIf="i < ftpHistory.length - 1">
-                <span
-                  [class.increase]="entry.ftp > ftpHistory[ftpHistory.length - 2 - i].ftp"
-                  [class.decrease]="entry.ftp < ftpHistory[ftpHistory.length - 2 - i].ftp"
-                >
-                  {{ entry.ftp - ftpHistory[ftpHistory.length - 2 - i].ftp | number: '1.0-0' }} W
-                  ({{
-                    ((entry.ftp - ftpHistory[ftpHistory.length - 2 - i].ftp) /
-                      ftpHistory[ftpHistory.length - 2 - i].ftp) *
-                      100 | number: '1.1-1'
-                  }}%)
-                </span>
+            <!-- FTP History Table -->
+            <div class="ftp-history-table">
+              <div class="table-header">
+                <div class="header-cell">Date</div>
+                <div class="header-cell">FTP (W)</div>
+                <div class="header-cell">Source</div>
+                <div class="header-cell">Change</div>
               </div>
-              <div class="cell" *ngIf="i === ftpHistory.length - 1">-</div>
+
+              <div class="table-body">
+                <div class="table-row" *ngFor="let entry of getCombinedFtpHistory(); let i = index">
+                  <div class="cell">{{ entry.date | date: 'MMM d, yyyy' }}</div>
+                  <div class="cell ftp-value">{{ entry.ftp }} W</div>
+                  <div class="cell">
+                    <span *ngIf="entry.activityName" [title]="entry.activityName">
+                      {{ entry.source || 'Activity' }}
+                    </span>
+                    <span *ngIf="!entry.activityName">Manual</span>
+                  </div>
+                  <div class="cell" *ngIf="i < getCombinedFtpHistory().length - 1">
+                    <span
+                      [class.increase]="entry.ftp > getCombinedFtpHistory()[i + 1].ftp"
+                      [class.decrease]="entry.ftp < getCombinedFtpHistory()[i + 1].ftp"
+                    >
+                      {{ entry.ftp - getCombinedFtpHistory()[i + 1].ftp | number: '1.0-0' }} W ({{
+                        ((entry.ftp - getCombinedFtpHistory()[i + 1].ftp) /
+                          getCombinedFtpHistory()[i + 1].ftp) *
+                          100 | number: '1.1-1'
+                      }}%)
+                    </span>
+                  </div>
+                  <div class="cell" *ngIf="i === getCombinedFtpHistory().length - 1">-</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

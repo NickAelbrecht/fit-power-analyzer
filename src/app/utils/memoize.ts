@@ -9,7 +9,8 @@ export function memoize<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => ReturnType<T> {
   const cache = new Map();
 
-  return (...args: Parameters<T>): ReturnType<T> => {
+  // Return a function that preserves the 'this' context
+  const memoized = function (this: any, ...args: Parameters<T>): ReturnType<T> {
     // Create a cache key from the arguments
     const key = JSON.stringify(args);
 
@@ -17,7 +18,8 @@ export function memoize<T extends (...args: any[]) => any>(
       return cache.get(key);
     }
 
-    const result = fn(...args);
+    // Call the original function with the correct 'this' context
+    const result = fn.apply(this, args);
     cache.set(key, result);
 
     // Limit cache size to prevent memory leaks
@@ -28,4 +30,6 @@ export function memoize<T extends (...args: any[]) => any>(
 
     return result;
   };
+
+  return memoized as (...args: Parameters<T>) => ReturnType<T>;
 }

@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  HostListener,
+  Inject,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { curveLinear } from 'd3-shape';
@@ -33,7 +41,10 @@ export class PowerDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   colorScheme = 'cool'; // Using a predefined color scheme name
   curve = curveLinear; // Set the curve type for line interpolation
 
-  constructor(private store: Store<{ activities: fromActivityReducer.ActivityState }>) {
+  constructor(
+    private store: Store<{ activities: fromActivityReducer.ActivityState }>,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
     // Get selected activity
     this.selectedActivity$ = this.store.pipe(
       select((state) => state.activities),
@@ -94,8 +105,11 @@ export class PowerDashboardComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   ngAfterViewInit(): void {
-    // Calculate dimensions after view is initialized
-    setTimeout(() => this.onResize(), 100);
+    // Only calculate dimensions in the browser
+    if (isPlatformBrowser(this.platformId)) {
+      // Calculate dimensions after view is initialized
+      setTimeout(() => this.onResize(), 100);
+    }
   }
 
   ngOnDestroy(): void {
@@ -105,16 +119,22 @@ export class PowerDashboardComponent implements OnInit, OnDestroy, AfterViewInit
 
   @HostListener('window:resize')
   onResize(): void {
-    const containerElement = document.getElementById('chart-container');
-    if (containerElement) {
-      // Get the width of the container
-      const width = containerElement.clientWidth || 700;
-      // Set the height proportionally
-      const height = Math.min(350, width * 0.5);
+    // Only run this in the browser, not during server-side rendering
+    if (isPlatformBrowser(this.platformId)) {
+      const containerElement = document.getElementById('chart-container');
+      if (containerElement) {
+        // Get the width of the container
+        const width = containerElement.clientWidth || 700;
+        // Set the height proportionally
+        const height = Math.min(350, width * 0.5);
 
-      // Update the view dimensions for the chart
-      this.view = [width, height];
-      console.log('Chart resized to:', this.view);
+        // Update the view dimensions for the chart
+        this.view = [width, height];
+        console.log('Chart resized to:', this.view);
+      }
+    } else {
+      // Set default dimensions for SSR
+      this.view = [700, 350];
     }
   }
 
