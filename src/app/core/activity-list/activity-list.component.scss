@@ -42,6 +42,7 @@ $strength-color: #9C27B0;
   padding: 0 0 15px 0;
   margin-bottom: 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04); // Add subtle shadow for separation
   
   .title-area {
     display: flex;
@@ -78,7 +79,7 @@ $strength-color: #9C27B0;
         width: 100%;
         padding: 10px 12px 10px 40px;
         border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 24px;
+        border-radius: $border-radius; // Use the same border radius
         font-size: 0.9rem;
         transition: all $transition-speed ease;
         
@@ -106,7 +107,7 @@ $strength-color: #9C27B0;
       .filter-btn {
         background-color: $card-background;
         border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 20px;
+        border-radius: $border-radius; // Use the same border radius
         padding: 6px 12px;
         font-size: 0.9rem;
         color: $text-secondary;

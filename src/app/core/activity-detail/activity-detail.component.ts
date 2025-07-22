@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store, select } from '@ngrx/store';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
@@ -60,10 +60,7 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
   timeline = true;
 
   // User FTP settings (can be made configurable in the future)
-  userFTP =
-    typeof window !== 'undefined' && localStorage.getItem('user-ftp')
-      ? Number(localStorage.getItem('user-ftp'))
-      : 250;
+  userFTP = 250;
 
   // Chart dimensions with default values
   chartDimensions: [number, number] = [1000, 400];
@@ -71,8 +68,14 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private store: Store<{ activities: fromActivityReducer.ActivityState }>
+    private store: Store<{ activities: fromActivityReducer.ActivityState }>,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
+    if (isPlatformBrowser(this.platformId)) {
+      this.userFTP = localStorage.getItem('user-ftp')
+        ? Number(localStorage.getItem('user-ftp'))
+        : 250;
+    }
     this.activity$ = this.route.paramMap.pipe(
       map((params) => params.get('id')),
       tap((id) => (this.activityId = id)),
@@ -137,7 +140,6 @@ export class ActivityDetailComponent implements OnInit, OnDestroy {
           }
         }
 
-        console.log('Chart data prepared:', chartData);
         return chartData;
       })
     );

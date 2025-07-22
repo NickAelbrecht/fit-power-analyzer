@@ -65,10 +65,6 @@
 
   <!-- Activity cards grid -->
   <div class="activity-cards">
-    <ng-container *ngIf="debug">
-      <pre>{{ filteredActivities$ | async | json }}</pre>
-    </ng-container>
-
     <ng-container *ngIf="filteredActivities$ | async as activities">
       <div
         *ngFor="let activity of activities"

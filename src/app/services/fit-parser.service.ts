@@ -1,5 +1,5 @@
-/// <reference path="../../types/fit-file-parser.d.ts" />
-import { Injectable } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 // @ts-ignore
 import FitParser from 'fit-file-parser';
 import { Observable, from, throwError } from 'rxjs';
@@ -38,30 +38,31 @@ export interface FitActivity {
 export class FitParserService {
   private parser = new FitParser();
 
-  constructor() {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     // Clear any sample data from localStorage on service initialization
     this.clearSampleData();
   }
 
   // Clear sample data from localStorage
   private clearSampleData(): void {
-    try {
-      const storedActivities = localStorage.getItem('fit-activities');
-      if (storedActivities) {
-        const activities = JSON.parse(storedActivities);
-        // Filter out any activities with IDs that start with 'sample-'
-        const realActivities = activities.filter(
-          (activity: FitActivity) => !activity.id.startsWith('sample-')
-        );
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const storedActivities = localStorage.getItem('fit-activities');
+        if (storedActivities) {
+          const activities = JSON.parse(storedActivities);
+          // Filter out any activities with IDs that start with 'sample-'
+          const realActivities = activities.filter(
+            (activity: FitActivity) => !activity.id.startsWith('sample-')
+          );
 
-        // If we removed any sample activities, update localStorage
-        if (realActivities.length !== activities.length) {
-          console.log(`Removed ${activities.length - realActivities.length} sample activities`);
-          localStorage.setItem('fit-activities', JSON.stringify(realActivities));
+          // If we removed any sample activities, update localStorage
+          if (realActivities.length !== activities.length) {
+            localStorage.setItem('fit-activities', JSON.stringify(realActivities));
+          }
         }
+      } catch (error) {
+        console.error('Error clearing sample data:', error);
       }
-    } catch (error) {
-      console.error('Error clearing sample data:', error);
     }
   }
 

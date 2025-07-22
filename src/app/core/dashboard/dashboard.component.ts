@@ -8,18 +8,11 @@ import * as ActivityActions from '../../store/activity/activity.actions';
 import * as fromActivityReducer from '../../store/activity/activity.reducer';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { PowerDashboardComponent } from '../power-dashboard/power-dashboard.component';
-import { TestChartComponent } from './test-chart.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    FileUploadComponent,
-    PowerDashboardComponent,
-    TestChartComponent,
-  ],
+  imports: [CommonModule, RouterModule, FileUploadComponent, PowerDashboardComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

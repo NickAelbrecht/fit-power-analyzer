@@ -170,15 +170,15 @@
     <div class="section power-curve-section">
       <h2>Critical Power Curve</h2>
 
-      <div class="no-data" *ngIf="powerCurveData.length === 0">
+      <div class="no-data" *ngIf="(powerCurveData$ | async)?.length === 0">
         <p>No activity data found. Upload some FIT files to see your power curve.</p>
       </div>
 
-      <div class="chart-container" *ngIf="powerCurveData.length > 0">
+      <div class="chart-container" *ngIf="powerCurveData$ | async as powerCurveData">
         <ngx-charts-line-chart
           [view]="view"
           [scheme]="colorScheme"
-          [results]="powerCurveData"
+          [results]="powerCurveData || []"
           [gradient]="gradient"
           [xAxis]="showXAxis"
           [yAxis]="showYAxis"

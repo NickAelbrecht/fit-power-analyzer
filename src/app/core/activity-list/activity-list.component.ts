@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store, select } from '@ngrx/store';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { FitActivity } from '../../services/fit-parser.service';
 import * as ActivityActions from '../../store/activity/activity.actions';
 import * as fromActivityReducer from '../../store/activity/activity.reducer';
@@ -20,7 +20,6 @@ export class ActivityListComponent implements OnInit {
   activities$: Observable<FitActivity[]>;
   filteredActivities$: Observable<FitActivity[]>;
   selectedActivityId$: Observable<string | null>;
-  debug = false; // Ensure debug mode is off to prevent sample data generation
 
   // Filter and search properties
   searchTerm: string = '';
@@ -46,11 +45,7 @@ export class ActivityListComponent implements OnInit {
     // Get all activities
     this.activities$ = this.store.pipe(
       select((state) => state.activities),
-      select(fromActivityReducer.selectAll),
-      tap((activities) => {
-        console.log('Activities loaded:', activities.length);
-        console.log('First activity:', activities[0]);
-      })
+      select(fromActivityReducer.selectAll)
     );
 
     // Create filtered activities observable
@@ -81,9 +76,6 @@ export class ActivityListComponent implements OnInit {
 
           return true;
         });
-      }),
-      tap((filtered) => {
-        console.log('Filtered activities:', filtered.length);
       })
     );
 
@@ -96,39 +88,6 @@ export class ActivityListComponent implements OnInit {
   ngOnInit(): void {
     // Load activities on init
     this.store.dispatch(ActivityActions.loadActivities());
-
-    // For debugging - add sample activity if none exist
-    setTimeout(() => {
-      this.activities$.subscribe((activities) => {
-        if (activities.length === 0 && this.debug) {
-          this.addSampleActivity();
-        }
-      });
-    }, 1000);
-  }
-
-  // Helper method to add a sample activity for debugging
-  private addSampleActivity() {
-    if (!this.debug) return;
-
-    const sampleActivity: FitActivity = {
-      id: 'sample-' + new Date().getTime(),
-      date: new Date(),
-      name: 'Sample Activity',
-      type: 'cycling',
-      totalTime: 3600, // 1 hour
-      powerData: Array(100)
-        .fill(0)
-        .map((_, i) => ({
-          timestamp: new Date(Date.now() - (100 - i) * 10000),
-          power: 150 + Math.round(Math.sin(i / 10) * 50),
-        })),
-      avgPower: 200,
-      maxPower: 300,
-      normalizedPower: 220,
-    };
-
-    this.store.dispatch(ActivityActions.addActivity({ activity: sampleActivity }));
   }
 
   selectActivity(id: string): void {

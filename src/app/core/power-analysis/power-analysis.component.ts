@@ -1,10 +1,17 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Inject,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Store, select } from '@ngrx/store';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { Observable, combineLatest } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { FitActivity, PowerData } from '../../services/fit-parser.service';
 import * as fromActivityReducer from '../../store/activity/activity.reducer';
 import { memoize } from '../../utils/memoize';
@@ -30,10 +37,12 @@ interface PowerZone {
   imports: [CommonModule, NgxChartsModule, FormsModule],
   templateUrl: './power-analysis.component.html',
   styleUrls: ['./power-analysis.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PowerAnalysisComponent implements OnInit {
   activities$: Observable<FitActivity[]>;
   bestEfforts$: Observable<BestEffort[]>;
+  powerCurveData$: Observable<any[]>;
 
   // FTP settings with safe localStorage access
   userFTP = 250; // Default value
@@ -54,7 +63,6 @@ export class PowerAnalysisComponent implements OnInit {
   ];
 
   // Chart options for power curve
-  powerCurveData: any[] = [];
   view: [number, number] = [500, 350]; // Adjusted dimensions for side-by-side layout
   showXAxis = true;
   showYAxis = true;
@@ -106,69 +114,39 @@ export class PowerAnalysisComponent implements OnInit {
     // Directly access the activities state like the activity-list component does
     this.activities$ = this.store.pipe(
       select((state) => state.activities),
-      select(fromActivityReducer.selectAll),
-      tap((activities) => {
-        // Debug logs matching activity-list.component.ts
-        console.log('Power Analysis - Activities loaded:', activities.length);
-        if (activities.length > 0) {
-          console.log('Power Analysis - First activity:', activities[0]);
-        }
-      })
+      select(fromActivityReducer.selectAll)
     );
-
     this.bestEfforts$ = this.activities$.pipe(
       map((activities) => {
         if (!activities || activities.length === 0) {
-          console.log('Power Analysis - No activities available for best efforts calculation');
           return [];
         }
-
-        // Log cycling activities specifically (as these are most relevant for power analysis)
-        const cyclingActivities = activities.filter((a) => a.type.toLowerCase() === 'cycling');
-        console.log('Power Analysis - Cycling activities:', cyclingActivities.length);
-
         return this.calculateBestEfforts(activities);
       })
     );
-
-    // Generate power curve data with improved logging
-    combineLatest([this.bestEfforts$, this.activities$]).subscribe(([bestEfforts, activities]) => {
-      console.log(
-        'Power Analysis - Generating power curve data. Best efforts:',
-        bestEfforts?.length || 0,
-        'Activities:',
-        activities?.length || 0
-      );
-
-      if (bestEfforts && activities && bestEfforts.length > 0 && activities.length > 0) {
-        this.powerCurveData = this.generatePowerCurveData(bestEfforts, activities);
-        console.log('Power Analysis - Power curve data generated:', this.powerCurveData);
-      } else {
-        console.log('Power Analysis - Not enough data to generate power curve');
-      }
-    });
+    this.powerCurveData$ = this.bestEfforts$.pipe(
+      map((bestEfforts) => {
+        if (!bestEfforts || bestEfforts.length === 0) return [];
+        return [
+          {
+            name: 'Best Efforts',
+            series: bestEfforts.map((effort) => ({
+              name: effort.durationLabel,
+              value: effort.power,
+            })),
+          },
+        ];
+      })
+    );
   }
 
   ngOnInit(): void {
-    console.log('Power Analysis - Component initialized');
     this.calculatePowerZones();
     this.loadFtpHistory();
-
-    // Calculate estimated FTP from activities and build activity-based FTP history
-    this.activities$.subscribe((activities) => {
-      console.log('Power Analysis - Activities for FTP calculation:', activities.length);
-      if (activities.length > 0) {
-        const ftp = this.calculateEstimatedFTP(activities);
-        console.log('Power Analysis - Estimated FTP:', ftp);
-
-        // Generate FTP estimates for all activities with power data
-        this.generateActivityFtpEstimates(activities);
-      }
-    });
+    // Remove activities$ subscription for FTP calculation and estimates, move to async pipe
   }
 
   saveFTP(): void {
-    // Only save to localStorage in browser context
     if (isPlatformBrowser(this.platformId)) {
       // Save current FTP
       localStorage.setItem('user-ftp', this.userFTP.toString());
@@ -210,14 +188,8 @@ export class PowerAnalysisComponent implements OnInit {
   calculateBestEfforts(activities: FitActivity[]): BestEffort[] {
     // Add null check
     if (!activities || activities.length === 0) {
-      console.debug('Power Analysis - No activities for best efforts calculation');
       return [];
     }
-
-    console.debug(`Power Analysis - Calculating best efforts for ${activities.length} activities`);
-
-    // Start time measurement for performance logging
-    const startTime = performance.now();
 
     const efforts: BestEffort[] = [];
 
@@ -226,34 +198,8 @@ export class PowerAnalysisComponent implements OnInit {
       (activity) => activity && activity.powerData && activity.powerData.length > 0
     );
 
-    console.debug(`Power Analysis - ${activitiesWithPower.length} activities have power data`);
-
-    // Log activity lengths to help debug long-duration issues
-    const activityLengths = activitiesWithPower.map((activity) => ({
-      name: activity.name,
-      type: activity.type,
-      dataPoints: activity.powerData.length,
-      durationHours: activity.totalTime ? (activity.totalTime / 3600).toFixed(1) : 'unknown',
-    }));
-
-    // Sort by duration (longest first) and log the top 5
-    const longestActivities = [...activityLengths]
-      .sort((a, b) => Number(b.dataPoints) - Number(a.dataPoints))
-      .slice(0, 5);
-
-    console.debug('Power Analysis - Longest activities available:');
-    longestActivities.forEach((activity, index) => {
-      console.debug(
-        `Power Analysis - Activity ${index + 1}: ${activity.name}, Type: ${activity.type}, Duration: ~${activity.durationHours}h (${activity.dataPoints} points)`
-      );
-    });
-
     // For each time period, find the best effort across all activities
     this.timePeriods.forEach((period) => {
-      console.debug(
-        `Power Analysis - Calculating best effort for period: ${period.label} (${period.seconds}s)`
-      );
-
       let bestPower = 0;
       let bestDate: Date | undefined = undefined;
       let bestActivityId: string | undefined = undefined;
@@ -279,17 +225,6 @@ export class PowerAnalysisComponent implements OnInit {
         eligibleActivities = activitiesWithPower.filter(
           (activity) => activity.powerData && activity.powerData.length >= minRequiredLength
         );
-
-        console.debug(
-          `Power Analysis - For ${period.label} effort, found ${eligibleActivities.length} activities with sufficient length (needed ${requiredDataRatio * 100}% or ${minRequiredLength} points)`
-        );
-
-        // Log the eligible activities for debugging long-duration issues
-        eligibleActivities.forEach((activity, index) => {
-          console.debug(
-            `Power Analysis - Eligible for ${period.label}: ${activity.name}, Length: ${activity.powerData.length} points`
-          );
-        });
       }
 
       // Calculate best effort for this period across all eligible activities
@@ -297,11 +232,6 @@ export class PowerAnalysisComponent implements OnInit {
         try {
           // Use memoized version for better performance
           const power = this.memoizedBestEffort(activity.powerData, period.seconds);
-          if (power > 0) {
-            console.debug(
-              `Power Analysis - ${activity.name} ${period.label} power: ${Math.round(power)}W`
-            );
-          }
 
           if (power > bestPower) {
             bestPower = power;
@@ -317,10 +247,6 @@ export class PowerAnalysisComponent implements OnInit {
         }
       });
 
-      console.debug(
-        `Power Analysis - Best ${period.label} effort: ${Math.round(bestPower)}W ${bestActivityName ? `(from ${bestActivityName})` : ''}`
-      );
-
       efforts.push({
         duration: period.seconds,
         durationLabel: period.label,
@@ -330,34 +256,14 @@ export class PowerAnalysisComponent implements OnInit {
       });
     });
 
-    // Log performance
-    console.debug(
-      `Power Analysis - Best efforts calculation took ${(performance.now() - startTime).toFixed(0)}ms`
-    );
-
     return efforts;
   }
 
   findBestEffortForPeriod(powerData: PowerData[], durationSeconds: number): number {
     try {
-      console.debug(
-        `Power Analysis - Finding best effort for period of ${durationSeconds} seconds`
-      );
-
       // Validate power data
       if (!powerData || !Array.isArray(powerData)) {
-        console.debug('Power Analysis - Invalid power data (not an array)');
         return 0;
-      }
-
-      // Enhanced logging for longer durations
-      if (durationSeconds >= 3600) {
-        console.debug(
-          `Power Analysis - Processing ${durationSeconds / 3600}h duration with ${powerData.length} data points`
-        );
-        console.debug(
-          `Power Analysis - Data coverage: ${((powerData.length / durationSeconds) * 100).toFixed(1)}% of required duration`
-        );
       }
 
       // Special case for 1-second power (max power)
@@ -374,7 +280,6 @@ export class PowerAnalysisComponent implements OnInit {
             maxPower = Math.max(maxPower, point.power);
           }
         }
-        console.debug(`Power Analysis - Max 1-second power: ${maxPower}W`);
         return maxPower;
       }
 
@@ -396,9 +301,6 @@ export class PowerAnalysisComponent implements OnInit {
       const minRequiredPoints = Math.floor(durationSeconds * requiredDataRatio);
 
       if (powerData.length < minRequiredPoints) {
-        console.debug(
-          `Power Analysis - Not enough data points (${powerData.length}) for duration ${durationSeconds}s (need ${minRequiredPoints})`
-        );
         return 0;
       }
 
@@ -422,32 +324,6 @@ export class PowerAnalysisComponent implements OnInit {
         }
       }
 
-      // Log data quality stats for longer durations
-      if (durationSeconds >= 3600) {
-        const sampleSize = Math.min(powerData.length, 1000);
-        console.debug(`Power Analysis - Data quality (sample of ${sampleSize} points):`);
-        console.debug(
-          `Power Analysis - Valid values: ${validCount} (${((validCount / sampleSize) * 100).toFixed(1)}%)`
-        );
-        console.debug(
-          `Power Analysis - Zero values: ${zeroCount} (${((zeroCount / sampleSize) * 100).toFixed(1)}%)`
-        );
-        console.debug(
-          `Power Analysis - Invalid values: ${nanCount} (${((nanCount / sampleSize) * 100).toFixed(1)}%)`
-        );
-
-        if (validCount > 0) {
-          console.debug(
-            `Power Analysis - Average of valid values: ${(totalSum / validCount).toFixed(1)}W`
-          );
-        }
-
-        // If we have too many zeros or invalid values, we might need to apply filtering
-        if (validCount < sampleSize * 0.7) {
-          console.debug(`Power Analysis - Warning: Low percentage of valid power values`);
-        }
-      }
-
       // Replace invalid power values with small positive value instead of 0
       // This helps with the sliding window calculation for longer durations
       const validatedPowerData = powerData.map((point) => {
@@ -459,11 +335,6 @@ export class PowerAnalysisComponent implements OnInit {
         return { timestamp: point.timestamp, power: point.power > 0 ? point.power : 1 };
       });
 
-      // Special handling for multi-hour durations
-      if (isVeryLongDuration) {
-        console.debug(`Power Analysis - Processing ${durationSeconds / 3600}h duration effort`);
-      }
-
       // Calculate basic stats for debugging
       let sumPower = 0;
       let maxPower = 0;
@@ -474,12 +345,6 @@ export class PowerAnalysisComponent implements OnInit {
         maxPower = Math.max(maxPower, point.power);
         minPower = Math.min(minPower, point.power);
       }
-
-      const avgPower = sumPower / validatedPowerData.length;
-
-      console.debug(
-        `Power Analysis - Power summary: avg=${avgPower.toFixed(1)}W, min=${minPower}W, max=${maxPower}W, points=${validatedPowerData.length}`
-      );
 
       // For longer efforts, use sampling to improve performance and handle data gaps better
       const samplingFactor =
@@ -495,14 +360,8 @@ export class PowerAnalysisComponent implements OnInit {
       if (durationSeconds >= 3600) {
         const result = this.calculateLongDurationBestEffort(validatedPowerData, durationSeconds);
         if (result > 0) {
-          console.debug(
-            `Power Analysis - Using robust calculation for ${durationSeconds}s: ${result.toFixed(1)}W`
-          );
           return result;
         }
-        console.debug(
-          `Power Analysis - Robust calculation failed, falling back to standard method`
-        );
       }
 
       // Only apply sampling for long durations with lots of data points
@@ -527,10 +386,6 @@ export class PowerAnalysisComponent implements OnInit {
     durationSeconds: number
   ): number {
     try {
-      console.debug(
-        `Power Analysis - Using robust long-duration calculation for ${durationSeconds}s`
-      );
-
       // Need at least this many consecutive valid power readings
       const minValidWindowSize = Math.floor(durationSeconds * 0.4);
 
@@ -572,10 +427,6 @@ export class PowerAnalysisComponent implements OnInit {
         }
       }
 
-      console.debug(
-        `Power Analysis - Robust method found window of ${maxValidWindowSize} points with avg ${bestAvgPower.toFixed(1)}W`
-      );
-
       // Only return a value if we found a reasonable window
       if (maxValidWindowSize >= minValidWindowSize) {
         return bestAvgPower;
@@ -597,15 +448,10 @@ export class PowerAnalysisComponent implements OnInit {
     // Sample the data to reduce computational load
     const sampledData = powerData.filter((_, index) => index % samplingFactor === 0);
 
-    console.debug(
-      `Power Analysis - Using sampling (1/${samplingFactor}) for ${durationSeconds}s calculation, reduced from ${powerData.length} to ${sampledData.length} points`
-    );
-
     // Adjust duration for sampled data
     const sampledDuration = Math.ceil(durationSeconds / samplingFactor);
 
     if (sampledData.length <= sampledDuration) {
-      console.debug(`Power Analysis - After sampling, not enough data points remain`);
       return 0;
     }
 
@@ -627,9 +473,6 @@ export class PowerAnalysisComponent implements OnInit {
       bestAvgPower = Math.max(bestAvgPower, windowAvg);
     }
 
-    console.debug(
-      `Power Analysis - Best ${durationSeconds}s power (with sampling): ${bestAvgPower.toFixed(1)}W`
-    );
     return bestAvgPower;
   }
 
@@ -638,8 +481,6 @@ export class PowerAnalysisComponent implements OnInit {
     powerData: { timestamp: Date | number; power: number }[],
     durationSeconds: number
   ): number {
-    console.debug(`Power Analysis - Using standard calculation for ${durationSeconds}s effort`);
-
     // Standard sliding window calculation
     let bestAvgPower = 0;
     let windowSum = 0;
@@ -663,7 +504,6 @@ export class PowerAnalysisComponent implements OnInit {
       }
     }
 
-    console.debug(`Power Analysis - Best ${durationSeconds}s power: ${bestAvgPower.toFixed(1)}W`);
     return bestAvgPower;
   }
 
@@ -753,26 +593,8 @@ export class PowerAnalysisComponent implements OnInit {
   calculateFTPFromLastRides(activities: FitActivity[]): number {
     try {
       if (!activities || !Array.isArray(activities) || activities.length === 0) {
-        console.debug('Power Analysis - No activities available for last 10 rides FTP calculation');
         return 0;
       }
-
-      console.debug(
-        `Power Analysis - Calculating FTP from last 10 rides out of ${activities.length} total activities`
-      );
-
-      // Log all activities to debug what we're working with
-      activities.forEach((activity, index) => {
-        if (activity && activity.powerData) {
-          console.debug(
-            `Power Analysis - Activity ${index}: ${activity.name}, Type: ${activity.type}, PowerData: ${activity.powerData.length} points`
-          );
-        } else {
-          console.debug(
-            `Power Analysis - Activity ${index}: ${activity?.name || 'Unknown'}, No power data`
-          );
-        }
-      });
 
       // Sort activities by date (newest first)
       const sortedActivities = [...activities].sort((a, b) => {
@@ -782,14 +604,11 @@ export class PowerAnalysisComponent implements OnInit {
         return dateB - dateA;
       });
 
-      console.debug(`Power Analysis - Sorted ${sortedActivities.length} activities by date`);
-
       // Take last 10 rides that have power data - be less strict with filtering
       const recentActivities = sortedActivities
         .filter((activity) => {
           // Basic existence check
           if (!activity) {
-            console.debug('Power Analysis - Skipping undefined activity');
             return false;
           }
 
@@ -799,7 +618,6 @@ export class PowerAnalysisComponent implements OnInit {
             typeof activity.type === 'string' &&
             activity.type.toLowerCase().includes('cycl');
           if (!isCycling) {
-            console.debug(`Power Analysis - Skipping non-cycling activity: ${activity.type}`);
             return false;
           }
 
@@ -809,9 +627,6 @@ export class PowerAnalysisComponent implements OnInit {
             Array.isArray(activity.powerData) &&
             activity.powerData.length > 0;
           if (!hasPowerData) {
-            console.debug(
-              `Power Analysis - Skipping activity without power data: ${activity.name}`
-            );
             return false;
           }
 
@@ -820,22 +635,8 @@ export class PowerAnalysisComponent implements OnInit {
         .slice(0, 10);
 
       if (recentActivities.length === 0) {
-        console.debug(
-          'Power Analysis - No recent cycling activities with power data found after filtering'
-        );
         return 0;
       }
-
-      console.debug(
-        `Power Analysis - Found ${recentActivities.length} recent cycling activities with power data for FTP calculation`
-      );
-
-      // Log basic info about each recent activity
-      recentActivities.forEach((activity, index) => {
-        console.debug(
-          `Power Analysis - Recent activity ${index + 1}: ${activity.name}, Date: ${new Date(activity.date).toLocaleDateString()}, Points: ${activity.powerData.length}, Avg Power: ${activity.avgPower}W`
-        );
-      });
 
       // Use normalized power for activities without enough data for 20-min power
       const ftpValues = recentActivities
@@ -844,9 +645,6 @@ export class PowerAnalysisComponent implements OnInit {
             // First try normalized power if available
             if (activity.normalizedPower && activity.normalizedPower > 0) {
               const ftpEstimate = Math.round(activity.normalizedPower * 0.76);
-              console.debug(
-                `Power Analysis - Using normalized power estimate for activity ${activity.name}: ${ftpEstimate}W (from NP: ${activity.normalizedPower}W)`
-              );
               return { value: ftpEstimate, source: 'NP', activity: activity.name };
             }
 
@@ -855,9 +653,6 @@ export class PowerAnalysisComponent implements OnInit {
               const twentyMinPower = this.findBestEffortForPeriod(activity.powerData, 1200);
               if (twentyMinPower > 0) {
                 const ftpEstimate = Math.round(twentyMinPower * 0.95);
-                console.debug(
-                  `Power Analysis - Calculated FTP estimate for activity ${activity.name}: ${ftpEstimate}W (from 20min power: ${Math.round(twentyMinPower)}W)`
-                );
                 return { value: ftpEstimate, source: '20min', activity: activity.name };
               }
             }
@@ -866,15 +661,9 @@ export class PowerAnalysisComponent implements OnInit {
             if (activity.avgPower && activity.avgPower > 0) {
               // Using 90% of average power as a fallback for shorter activities
               const ftpEstimate = Math.round(activity.avgPower * 0.9);
-              console.debug(
-                `Power Analysis - Using average power fallback for activity ${activity.name}: ${ftpEstimate}W (from avg: ${activity.avgPower}W)`
-              );
               return { value: ftpEstimate, source: 'avg', activity: activity.name };
             }
 
-            console.debug(
-              `Power Analysis - No valid power data for FTP calculation in activity: ${activity.name}`
-            );
             return { value: 0, source: 'none', activity: activity.name };
           } catch (error) {
             console.error(
@@ -887,17 +676,8 @@ export class PowerAnalysisComponent implements OnInit {
         .filter((result) => result.value > 0);
 
       if (ftpValues.length === 0) {
-        console.debug('Power Analysis - No valid FTP values calculated from recent activities');
         return 0;
       }
-
-      // Log calculated FTP values for debugging
-      console.debug(`Power Analysis - Calculated ${ftpValues.length} FTP values from activities:`);
-      ftpValues.forEach((result) => {
-        console.debug(
-          `Power Analysis - ${result.activity}: ${result.value}W (source: ${result.source})`
-        );
-      });
 
       // Return the highest value - use for loop to avoid spread operator
       let maxFtp = 0;
@@ -909,7 +689,6 @@ export class PowerAnalysisComponent implements OnInit {
         }
       }
 
-      console.debug(`Power Analysis - Highest FTP estimate: ${maxFtp}W from ${bestActivityName}`);
       return maxFtp;
     } catch (err) {
       console.error('Power Analysis - Error in calculateFTPFromLastRides:', err);
@@ -921,13 +700,8 @@ export class PowerAnalysisComponent implements OnInit {
   calculateEstimatedFTP(activities: FitActivity[]): number {
     try {
       if (!activities || !Array.isArray(activities) || activities.length === 0) {
-        console.debug('Power Analysis - No activities available for FTP estimation');
         return 0;
       }
-
-      console.debug(
-        `Power Analysis - Calculating estimated FTP from ${activities.length} activities`
-      );
 
       // Verify timePeriods is accessible
       if (!this.timePeriods) {
@@ -944,10 +718,6 @@ export class PowerAnalysisComponent implements OnInit {
           activity.type.toLowerCase().includes('cycl')
       );
 
-      console.debug(
-        `Power Analysis - Found ${cyclingActivities.length} cycling activities out of ${activities.length} total`
-      );
-
       // Be more lenient with data requirements - allow activities with at least 15 minutes of data (900 seconds)
       // instead of requiring the full 20 minutes (1200 seconds)
       const eligibleActivities = cyclingActivities.filter((activity) => {
@@ -959,27 +729,10 @@ export class PowerAnalysisComponent implements OnInit {
           activity.powerData.length >= 900; // At least 15 minutes of data
 
         if (!hasPowerData) {
-          console.debug(
-            `Power Analysis - Cycling activity ${activity.name} has insufficient power data: ${activity.powerData?.length || 0} points`
-          );
-        } else {
-          console.debug(
-            `Power Analysis - Cycling activity ${activity.name} has ${activity.powerData.length} power data points (sufficient)`
-          );
+          return false;
         }
 
-        return hasPowerData;
-      });
-
-      console.debug(
-        `Power Analysis - ${eligibleActivities.length} cycling activities have sufficient data for 20-min power calculation`
-      );
-
-      // Log each eligible activity
-      eligibleActivities.forEach((activity, index) => {
-        console.debug(
-          `Power Analysis - Eligible activity ${index + 1}: ${activity.name}, Duration: ${activity.totalTime}s, Power points: ${activity.powerData.length}, Avg Power: ${activity.avgPower || 0}W`
-        );
+        return true;
       });
 
       // Find the best 20-minute effort across all activities
@@ -991,18 +744,10 @@ export class PowerAnalysisComponent implements OnInit {
         (activity) => activity.powerData && activity.powerData.length >= 1200
       );
 
-      console.debug(
-        `Power Analysis - ${activitiesWith20Min.length} activities have full 20-min data`
-      );
-
       // Try with 20-minute activities first
       activitiesWith20Min.forEach((activity) => {
         try {
-          console.debug(`Power Analysis - Calculating 20-min power for activity ${activity.name}`);
           const power = this.findBestEffortForPeriod(activity.powerData, 1200);
-          console.debug(
-            `Power Analysis - Activity ${activity.name} 20-min power: ${power.toFixed(1)}W`
-          );
           if (power > bestPower) {
             bestPower = power;
             bestActivityName = activity.name;
@@ -1017,8 +762,6 @@ export class PowerAnalysisComponent implements OnInit {
 
       // If we don't have a valid 20-min power, try with 15-min activities
       if (bestPower <= 0 && eligibleActivities.length > activitiesWith20Min.length) {
-        console.debug(`Power Analysis - No valid 20-min power found, trying with 15-min data`);
-
         const activitiesWith15Min = eligibleActivities.filter(
           (activity) =>
             activity.powerData &&
@@ -1028,15 +771,9 @@ export class PowerAnalysisComponent implements OnInit {
 
         activitiesWith15Min.forEach((activity) => {
           try {
-            console.debug(
-              `Power Analysis - Calculating 15-min power for activity ${activity.name}`
-            );
             const power = this.findBestEffortForPeriod(activity.powerData, 900);
             // Apply a small adjustment factor for 15-min vs 20-min
             const adjustedPower = power * 0.97; // 15-min power is typically ~3% higher than 20-min
-            console.debug(
-              `Power Analysis - Activity ${activity.name} 15-min power: ${power.toFixed(1)}W, adjusted: ${adjustedPower.toFixed(1)}W`
-            );
             if (adjustedPower > bestPower) {
               bestPower = adjustedPower;
               bestActivityName = activity.name + ' (15min)';
@@ -1051,8 +788,6 @@ export class PowerAnalysisComponent implements OnInit {
       }
 
       if (bestPower <= 0) {
-        console.debug('Power Analysis - No valid power data found for 20-min or 15-min efforts');
-
         // Fallback: try normalized power
         const activitiesWithNP = activities.filter(
           (a) => a && a.normalizedPower && a.normalizedPower > 0
@@ -1069,14 +804,10 @@ export class PowerAnalysisComponent implements OnInit {
           });
 
           const ftpEstimate = Math.round(bestNP * 0.76);
-          console.debug(
-            `Power Analysis - Using fallback NP method: ${ftpEstimate}W from ${bestNPActivity}`
-          );
           return ftpEstimate;
         }
 
         // Second fallback: use 5-min power if available
-        console.debug('Power Analysis - Trying fallback to 5-min power');
         let best5MinPower = 0;
         let best5MinActivity = '';
 
@@ -1097,9 +828,6 @@ export class PowerAnalysisComponent implements OnInit {
         if (best5MinPower > 0) {
           // Use 85% of 5-min power as FTP estimate (rough approximation)
           const ftpEstimate = Math.round(best5MinPower * 0.85);
-          console.debug(
-            `Power Analysis - Using 5-min power fallback: ${ftpEstimate}W from ${best5MinActivity}`
-          );
           return ftpEstimate;
         }
 
@@ -1107,9 +835,6 @@ export class PowerAnalysisComponent implements OnInit {
       }
 
       const estimatedFTP = Math.round(bestPower * 0.95);
-      console.debug(
-        `Power Analysis - Best 20-min power: ${bestPower.toFixed(1)}W from ${bestActivityName}, Estimated FTP: ${estimatedFTP}W`
-      );
 
       return estimatedFTP;
     } catch (err) {
@@ -1223,9 +948,6 @@ export class PowerAnalysisComponent implements OnInit {
   getEstimatedFTPFromLastRides(activities: FitActivity[]): number {
     try {
       const result = this.memoizedLastRidesFTP(activities);
-      console.debug(
-        `Power Analysis - getEstimatedFTPFromLastRides called for template: ${result}W`
-      );
       return result;
     } catch (err) {
       console.error('Power Analysis - Error in getEstimatedFTPFromLastRides:', err);
@@ -1237,7 +959,6 @@ export class PowerAnalysisComponent implements OnInit {
   getEstimatedFTPFrom20Min(activities: FitActivity[]): number {
     try {
       const result = this.memoizedEstimatedFTP(activities);
-      console.debug(`Power Analysis - getEstimatedFTPFrom20Min called for template: ${result}W`);
       return result;
     } catch (err) {
       console.error('Power Analysis - Error in getEstimatedFTPFrom20Min:', err);
@@ -1248,8 +969,6 @@ export class PowerAnalysisComponent implements OnInit {
   // New method to generate FTP estimates from all activities for the history chart/table
   generateActivityFtpEstimates(activities: FitActivity[]): void {
     if (!activities || activities.length === 0) return;
-
-    console.debug(`Power Analysis - Generating FTP estimates for ${activities.length} activities`);
 
     // Sort activities by date (newest first)
     const sortedActivities = [...activities].sort((a, b) => {
@@ -1322,10 +1041,6 @@ export class PowerAnalysisComponent implements OnInit {
         console.error(`Power Analysis - Error calculating FTP for activity ${activity.id}:`, error);
       }
     });
-
-    console.debug(
-      `Power Analysis - Generated ${this.activityFtpEstimates.length} FTP estimates from activities`
-    );
 
     // Sort by date (newest first) in case processing changed the order
     this.activityFtpEstimates.sort((a, b) => b.date.getTime() - a.date.getTime());

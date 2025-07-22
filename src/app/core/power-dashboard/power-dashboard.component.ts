@@ -94,15 +94,12 @@ export class PowerDashboardComponent implements OnInit, OnDestroy, AfterViewInit
           });
         }
 
-        console.log('Chart data prepared:', series);
         return series;
       })
     );
   }
 
-  ngOnInit(): void {
-    console.log('PowerDashboardComponent initialized');
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     // Only calculate dimensions in the browser
@@ -130,7 +127,6 @@ export class PowerDashboardComponent implements OnInit, OnDestroy, AfterViewInit
 
         // Update the view dimensions for the chart
         this.view = [width, height];
-        console.log('Chart resized to:', this.view);
       }
     } else {
       // Set default dimensions for SSR
