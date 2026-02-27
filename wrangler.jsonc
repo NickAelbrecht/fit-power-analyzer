@@ -4,7 +4,9 @@
   "compatibility_date": "2026-02-27",
   "assets": {
     "directory": "dist/fit-power-analyzer/browser",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "main": "src/worker.ts"
 }
 
