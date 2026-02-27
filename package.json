@@ -9,7 +9,10 @@
     "test": "ng test",
     "serve:ssr:fit-power-analyzer": "node dist/fit-power-analyzer/server/server.mjs",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss,json,md}\""
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss,json,md}\"",
+    "build:cloudflare": "ng build --configuration production",
+    "build:cloudflare:stats": "ng build --configuration production --stats-json",
+    "analyze": "webpack-bundle-analyzer dist/stats.json"
   },
   "private": true,
   "dependencies": {

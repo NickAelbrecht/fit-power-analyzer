@@ -3,7 +3,7 @@
   "name": "fit-power-analyzer",
   "compatibility_date": "2026-02-27",
   "assets": {
-    "directory": "fit-power-analyzer/dist/fit-power-analyzer/browser"
+    "directory": "dist/fit-power-analyzer/browser"
   }
 }
 
