@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { FitParserService } from '../../services/fit-parser.service';
 import * as ActivityActions from '../../store/activity/activity.actions';
@@ -10,6 +10,7 @@ import * as ActivityActions from '../../store/activity/activity.actions';
   imports: [CommonModule],
   templateUrl: './file-upload.component.html',
   styleUrls: ['./file-upload.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadComponent {
   isDragging = false;

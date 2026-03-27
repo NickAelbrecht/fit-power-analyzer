@@ -1,9 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
-// @ts-ignore
-import FitParser from 'fit-file-parser';
 import { Observable, from, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
+
+// Worker-based parsing: the worker will import the third-party parser.
+// The service sends an ArrayBuffer with transfer to avoid copies.
 
 export interface PowerData {
   timestamp: Date;
@@ -36,11 +37,17 @@ export interface FitActivity {
   providedIn: 'root',
 })
 export class FitParserService {
-  private parser = new FitParser();
-
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     // Clear any sample data from localStorage on service initialization
     this.clearSampleData();
+  }
+
+  private createWorker(): Worker {
+    // Use module worker import so bundler includes the worker file
+    // Path is relative to this service file
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return new Worker(new URL('../workers/fit-parser.worker', import.meta.url), { type: 'module' });
   }
 
   // Clear sample data from localStorage
@@ -67,8 +74,54 @@ export class FitParserService {
   }
 
   parseFitFile(file: File): Observable<FitActivity> {
-    return from(this.readFileAsArrayBuffer(file)).pipe(
-      switchMap((buffer) => from(this.processFitData(buffer, file.name))),
+    // Read file then send buffer to worker with transfer for zero-copy
+    return new Observable<FitActivity>((subscriber) => {
+      this.readFileAsArrayBuffer(file)
+        .then((buffer) => {
+          if (!isPlatformBrowser(this.platformId)) {
+            subscriber.error(new Error('Parsing only supported in browser environment'));
+            return;
+          }
+
+          const worker = this.createWorker();
+          const msgId = String(Date.now()) + Math.random().toString(16).slice(2);
+
+          const onMessage = (ev: MessageEvent) => {
+            const data = ev.data || {};
+            if (data.id !== msgId) return;
+            if (data.error) {
+              subscriber.error(new Error(data.error));
+            } else {
+              subscriber.next(data.activity as FitActivity);
+              subscriber.complete();
+            }
+            worker.removeEventListener('message', onMessage);
+            worker.terminate();
+          };
+
+          const onError = (ev: ErrorEvent) => {
+            subscriber.error(new Error(ev.message || 'Worker error'));
+            worker.removeEventListener('error', onError);
+            worker.terminate();
+          };
+
+          worker.addEventListener('message', onMessage);
+          worker.addEventListener('error', onError);
+
+          // Transfer the buffer to the worker to avoid copy
+          worker.postMessage({ id: msgId, buffer }, [buffer]);
+
+          // Teardown: terminate worker if unsubscribed
+          return () => {
+            try {
+              worker.terminate();
+            } catch (e) {
+              // ignore
+            }
+          };
+        })
+        .catch((err) => subscriber.error(err));
+    }).pipe(
       catchError((error) => {
         console.error('Error parsing FIT file:', error);
         return throwError(() => new Error(`Failed to parse FIT file: ${error.message}`));
@@ -82,73 +135,6 @@ export class FitParserService {
       fileReader.onload = () => resolve(fileReader.result as ArrayBuffer);
       fileReader.onerror = reject;
       fileReader.readAsArrayBuffer(file);
-    });
-  }
-
-  private processFitData(buffer: ArrayBuffer, fileName: string): Promise<FitActivity> {
-    return new Promise((resolve, reject) => {
-      this.parser.parse(buffer, (error: any, data: any) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        // Extract power data
-        const powerData: PowerData[] = [];
-        const heartRateData: HeartRateData[] = [];
-        let maxPower = 0;
-        let totalPower = 0;
-        let powerPoints = 0;
-
-        // Parse sessions and records
-        if (data.records) {
-          data.records.forEach((record: any) => {
-            if (record.power) {
-              // Extract power data and other metrics
-              const point: PowerData = {
-                timestamp: new Date(record.timestamp),
-                power: record.power,
-                heartRate: record.heart_rate,
-                cadence: record.cadence,
-                speed: record.speed,
-                distance: record.distance,
-              };
-
-              powerData.push(point);
-
-              // Track max and sum for average
-              if (record.power > maxPower) {
-                maxPower = record.power;
-              }
-              totalPower += record.power;
-              powerPoints++;
-            }
-
-            // Also collect heart rate data in a separate array
-            if (record.heart_rate) {
-              heartRateData.push({
-                timestamp: new Date(record.timestamp),
-                heartRate: record.heart_rate,
-              });
-            }
-          });
-        }
-
-        // Create activity object
-        const activity: FitActivity = {
-          id: new Date().getTime().toString(),
-          date: data.sessions?.[0]?.start_time || new Date(),
-          name: fileName || 'Unknown Activity',
-          type: data.sessions?.[0]?.sport || 'cycling',
-          totalTime: data.sessions?.[0]?.total_timer_time || 0,
-          powerData: powerData,
-          heartRateData: heartRateData.length > 0 ? heartRateData : undefined,
-          avgPower: powerPoints > 0 ? Math.round(totalPower / powerPoints) : 0,
-          maxPower: maxPower,
-        };
-
-        resolve(activity);
-      });
     });
   }
 }

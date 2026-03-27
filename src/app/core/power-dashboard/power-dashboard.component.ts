@@ -7,6 +7,7 @@ import {
   OnDestroy,
   OnInit,
   PLATFORM_ID,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
@@ -22,6 +23,7 @@ import * as fromActivityReducer from '../../store/activity/activity.reducer';
   imports: [CommonModule, NgxChartsModule],
   templateUrl: './power-dashboard.component.html',
   styleUrls: ['./power-dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PowerDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedActivity$: Observable<FitActivity | null>;
